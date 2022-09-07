@@ -63,7 +63,7 @@ export default {
         icons: true
     },
     axios: {
-        baseURL: process.env.NODE_ENV !== 'production' ? "https://localhost:7000/api/" : 'https://localhost:7000/api/',
+        baseURL: process.env.NODE_ENV !== 'production' ? "https://localhost:7000/api/" : 'https://podapi.stoecom.com/api/',
         debug: process.env.DEBUG || false
     },
     /*

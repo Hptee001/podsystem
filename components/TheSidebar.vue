@@ -61,86 +61,39 @@ export default {
             navSeller: {
                 _children: [
                     {
-                    _name: "CSidebarNavDropdown",
-                    name: "Reports",
-                    icon: "cil-description",
-                    items: [{
-                            name: "Report FF Products",
-                            icon: "cil-aperture",
-                            to: "/reports/report-basecost"
-                        },
-                        {
-                            name: "Report Metric Ads",
-                            icon: "cil-aperture",
-                            to: "/reports/report-metricads"
-                        }, {
-                            name: "Report Performance",
-                            icon: "cil-aperture",
-                            to: "/reports/report-performance"
-                        }
-                    ]
-                }, ]
-            },
-            navStaff: {
-                _children: [{
                         _name: "CSidebarNavDropdown",
                         name: "Handle",
                         icon: "cil-sync",
                         items: [{
-                                name: "Cards",
-                                icon: "cil-aperture",
-                                to: "/handle/orders"
-                            },
-                             {
-                    name: "Replace SKU",
-                    icon: "cil-aperture",
-                    to: "/handle/replace-sku"
-                },
-                            {
-                                name: "Tracking",
-                                icon: "cil-aperture",
-                                to: "/handle/trackingimports"
-                            }
-                        ]
-                    },
-                    {
+                            name: "Cards",
+                            icon: "cil-aperture",
+                            to: "/handle/cards"
+                        }]
+                    }, ]
+            },
+            navDesigner: {
+                _children: [ {
                         _name: "CSidebarNavDropdown",
-                        name: "Reports",
-                        icon: "cil-description",
-                        items: [
-                             {
-                    name: "Report Cards",
-                    icon: "cil-aperture",
-                    to: "/reports/report-cards"
-                }, {
-                    name: "Report Disputes",
-                    icon: "cil-aperture",
-                    to: "/reports/report-disputes"
-                },
-                {
-                    name: "Report Ads Debt",
-                    icon: "cil-aperture",
-                    to: "/reports/report-adsaccount"
-
-                }, {
-                    name: "Report Metric Ads",
-                    icon: "cil-aperture",
-                    to: "/reports/report-metricads"
-                }, {
-                    name: "Report Spy",
-                    icon: "cil-aperture",
-                    to: "/reports/report-spystores"
-                }, {
-                    name: "Report Performance",
-                    icon: "cil-aperture",
-                    to: "/reports/report-performance"
-                },
-                {
-                    name: "Report Performance Product",
-                    icon: "cil-aperture",
-                    to: "/reports/report-performance-product"
-                }
-                        ]
+                        name: "Handle",
+                        icon: "cil-sync",
+                        items: [{
+                            name: "Cards",
+                            icon: "cil-aperture",
+                            to: "/handle/cards"
+                        }]
+                    },
+                ]
+            },
+            navFulfillment: {
+                _children: [ {
+                        _name: "CSidebarNavDropdown",
+                        name: "Handle",
+                        icon: "cil-sync",
+                        items: [{
+                            name: "Cards",
+                            icon: "cil-aperture",
+                            to: "/handle/cards"
+                        }]
                     },
                 ]
             },
@@ -148,12 +101,12 @@ export default {
     },
     computed: {
         show() {
-            if (this.$auth.user.roles === 'seller')
+            if (this.$auth.user.role === 'seller')
                 nav[0]._children = this.navSeller._children
-            if (this.$auth.user.roles === 'designer')
-                nav[0]._children = this.navSeller._children
-            if (this.$auth.user.roles === 'fulfillment')
-                nav[0]._children = this.navStaff._children
+            if (this.$auth.user.role === 'designer')
+                nav[0]._children = this.navDesigner._children
+            if (this.$auth.user.role === 'fulfillment')
+                nav[0]._children = this.navFulfillment._children
                
             this.$options.nav = nav;
             return this.$store.state.sidebarShow

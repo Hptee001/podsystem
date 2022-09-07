@@ -1,37 +1,81 @@
 <template>
-<div>
-    <!-- Alert -->
+<div style="padding:10px; background:white;">
     <b-alert variant="danger" dismissible fade :show="isError" @dismissed="isError=false">
         Error: {{messageError}}
     </b-alert>
-    <div v-if="isLoading" class="text-center">
-        <b-spinner label="Spinning"></b-spinner>
-        <b-spinner type="grow" label="Spinning"></b-spinner>
-        <b-spinner variant="primary" label="Spinning"></b-spinner>
-        <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner>
-        <b-spinner variant="success" label="Spinning"></b-spinner>
-        <b-spinner variant="success" type="grow" label="Spinning"></b-spinner>
+
+    <b-button v-if="!isbulkUpload" @click="isbulkUpload=true">Bulk Uploads</b-button>
+    <b-button v-if="!isbulkUpload" @click="reloadData()" variant="success">
+        <b-icon icon="arrow-clockwise"></b-icon>
+    </b-button>
+
+    <div v-if="!isbulkUpload">
+
     </div>
+    <b-button v-else @click="isbulkUpload=false">Back</b-button>
     <CCard v-if="isbulkUpload">
         <CCardHeader>
-            <b-form-file multiple :file-name-formatter="formatNames" v-model="files"></b-form-file>
-            <div v-for="file in files" :key="file.name">
-                {{file.name}}
+            <b-form-file multiple :file-name-formatter="formatNames" @input="inputFiles" v-model="files"></b-form-file>
+            <div style="margin:2px;"></div>
+            <div v-for="(item,index) in items_upload" :key="index">
+                <b-form @submit.prevent="uploadDesign(item)">
+                    <b-row class="row-item-upload">
+                        <b-col cols="2">
+                            <label class="file-name">
+                                {{item.file.name}}
+                            </label>
+                        </b-col>
+                        <b-col cols="2">
+                            <b-form-select v-model="item.seller" required :options="options_seller">
+                                <template #first>
+                                    <b-form-select-option :value="null" disabled>-- Please select a Seller --</b-form-select-option>
+                                </template>
+                            </b-form-select>
+                        </b-col>
+                        <b-col>
+                            <b-button v-if="item.isUpload" variant="outline-primary" @click="editItem(item)">Edit</b-button>
+                            <div v-else>
+                                <b-spinner v-if="item.isUploading" small label="Uploading"></b-spinner>
+                                <div v-else>
+                                    <b-button type="submit" variant="outline-success">Upload</b-button>
+                                    <b-button @click="removeDesign(item)" variant="outline-danger">X</b-button>
+                                </div>
+
+                            </div>
+
+                        </b-col>
+                    </b-row>
+                </b-form>
             </div>
         </CCardHeader>
     </CCard>
-    <CCard v-else>
-        <CCardHeader>
-            <b-row style="margin:0px;">
-                <b-col cols="auto" class="p-3" style="padding:0px;margin:0px;">
-                    <b-button variant="success" @click="add()">Add Card</b-button>
-                </b-col>
-                <b-col cols="auto" class="mr-auto p-3"></b-col>
-            </b-row>
-        </CCardHeader>
-        <b-row>
-            <b-col class="col-card" v-for="item in items" :key="item.id" @click="editItem(item)">
-                <the-card :name="item.name" :tags="item.tags" :created_user="item.created_user" :created_at="item.created_at"></the-card>
+    <div v-else>
+        <b-row class="justify-content-md-center" style="padding:10px;">
+            <b-col cols="auto" align-h="center">
+                <b-input-group style="width:600px">
+                    <b-form-radio-group id="radio-group-1" style="padding:5px" v-model="searchtype" name="radio-options">
+                        <b-form-radio value="id">ID</b-form-radio>
+                        <b-form-radio value="name" checked="name">Title</b-form-radio>
+                    </b-form-radio-group>
+
+                    <b-form-input v-model="searchvalue" style="width:auto"></b-form-input>
+                    <b-input-group-append>
+                        <b-button variant="info" @click="getCards">Search</b-button>
+                    </b-input-group-append>
+                </b-input-group>
+            </b-col>
+        </b-row>
+        <div v-if="isLoading" class="text-center">
+            <b-spinner label="Spinning"></b-spinner>
+            <b-spinner type="grow" label="Spinning"></b-spinner>
+            <b-spinner variant="primary" label="Spinning"></b-spinner>
+            <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner>
+            <b-spinner variant="success" label="Spinning"></b-spinner>
+            <b-spinner variant="success" type="grow" label="Spinning"></b-spinner>
+        </div>
+        <b-row v-else>
+            <b-col cols="auto" class="col-card" v-for="item in items" :key="item.id">
+                <the-card :editCard="editItem" :item="item" :name="item.name" :thumbnail="item.thumbnail" :tags="item.tags" :created_user="item.created_user" :created_at="item.created_at"></the-card>
             </b-col>
         </b-row>
         <b-table v-if="isShowTable" responsive striped hover :items="items" :fields="fields">
@@ -44,16 +88,35 @@
                 </b-button>
             </template>
         </b-table>
-    </CCard>
+        <b-container style="padding:10px;">
+            <b-row class="justify-content-md-center">
+                <b-col cols="auto" align-h="center">
+                    <b-button-group>
+                        <b-button variant="outline-primary" v-show="currentPage>1" @click="prevPage">Prev</b-button>
+                        <b-button variant="outline-primary" @click="nextPage" v-show="isShowNextPage">Next</b-button>
+                    </b-button-group>
+                </b-col>
+            </b-row>
+        </b-container>
+    </div>
+
     <!-- The modal -->
 
     <b-modal v-model="dialogDelete" @ok="deleteItemConfirm">Do you want delete this account{{edititem.username}}?!</b-modal>
-    <b-modal v-model="dialog" @hidden="close" @ok="save" centered cancel-title="Close" size="lg">
-        <b-spinner v-if="isLoading" type="grow" label="Spinning"></b-spinner>
+    <b-modal v-model="dialogDeleteAttachment" @ok="deleteAttachmentConfirm">Do you want delete this file?!</b-modal>
+    <b-modal v-model="dialog" @hidden="close" centered ok-title="Close" size="lg" ok-only>
+        <!-- <b-spinner v-if="isLoading" type="grow" label="Spinning"></b-spinner> -->
+
         <b-row>
             <b-col cols="8">
-                <CInput v-model="edititem.name" label="Title" />
-                <CInput v-model="edititem.sku" label="Sku" />
+                <label>Date: {{edititem.created_at}}</label><br />
+                <label>
+                    <b-link @click="copyClipboard(edititem.name)" style="color:black">
+                        <b-icon icon="files"> </b-icon> Title
+                    </b-link>
+                </label>
+                <b-form-input v-model="edititem.name"></b-form-input>
+                <CInput v-model="edititem.id" label="Sku" readonly />
                 <label>
                     <b-icon icon="list-nested"></b-icon>Description:
                 </label>
@@ -61,23 +124,31 @@
                 <label>
                     <b-icon icon="paperclip"></b-icon>Attachments
                 </label>
-                <b-list-group>
-                    <b-list-group-item v-for="attachment in edit_attachments" :key="attachment.id">
-                        <b-row align-v="start">
-                            <b-col cols="auto">
-                                <img :src="attachment.url" height="100px" width="100px" />
-                            </b-col>
-                            <b-col>
-                                <label>{{attachment.name}}</label>
-                                <h6>{{attachment.created_user}}</h6>
-                                <small>{{attachment.created_at}}</small>
-                            </b-col>
-                        </b-row>
-                    </b-list-group-item>
-                </b-list-group>
-                <div>
-                    <b-form-file v-model="file" ref="file-input" class="mb-2"></b-form-file>
+                <div v-for="attachment in edit_attachments">
+                    <b-row align-v="start">
+                        <b-col cols="auto">
+                            <img :src="attachment.thumbnail" height="100px" width="100px" />
+                        </b-col>
+                        <b-col>
+                            <span>{{attachment.name}}</span>
+                            <br />
+                            <h6>{{attachment.type}} - {{attachment.created_user}}</h6>
+                            <a :href="attachment.url" target="_blank">View Orginal</a>
+                            <b-link @click="deleteAttachment(attachment)" style="color:red">Delete</b-link>
+                        </b-col>
+                    </b-row>
                 </div>
+                <b-form @submit.prevent="uploadAttachment">
+                    <b-input-group class="mt-3">
+                        <b-form-file style="width:auto" v-model="file" :state="Boolean(file)" placeholder="Choose a file" drop-placeholder="Drop file here..." required></b-form-file>
+                        <b-form-select v-model="attachment_type" :options="options_design" required style="width:50px">
+                        </b-form-select>
+                        <b-input-group-append>
+                            <b-spinner v-if="isUploadingAttachment" size="sm"></b-spinner>
+                            <b-button v-else variant="outline-success" type="submit">Upload</b-button>
+                        </b-input-group-append>
+                    </b-input-group>
+                </b-form>
 
             </b-col>
             <b-col cols="4">
@@ -85,14 +156,24 @@
                     Type:
                 </label>
                 <b-form-select v-model="edititem.type" :options="options_type" placeholder="Select Type" style="margin-bottom:15px;"></b-form-select>
-
                 <label>
-                    Tags:
+                    <b-link @click="copyClipboard(edititem.tags)" style="color:black">
+                        <b-icon icon="files"> </b-icon> Tags:
+                    </b-link>
                 </label>
                 <b-form-tags input-id="tags-basic" v-model="edittag"></b-form-tags>
+                <label>
+                    Seller:
+                </label>
+                <b-form-select v-model="edititem.seller" :options="options_seller" placeholder="Select Seller" style="margin-bottom:15px;"></b-form-select>
+                <label>
+                    Designer:
+                </label>
+                <b-form-select v-model="edititem.designer" :options="options_designer" placeholder="Select Designer" style="margin-bottom:15px;"></b-form-select>
+                <b-button @click="save" variant="success" block style="margin-top:10px">Save</b-button>
             </b-col>
         </b-row>
-
+        <b-overlay :show="isEditLoading" no-wrap></b-overlay>
     </b-modal>
 </div>
 </template>
@@ -113,9 +194,13 @@ export default {
     },
     data() {
         return {
+            searchtype: 'name',
+            searchvalue: '',
+            isShowNextPage: false,
             files: [],
-            file:null,
-            isbulkUpload: true,
+            file: null,
+            isbulkUpload: false,
+            isUploadingAttachment: false,
             tags: null,
             isShowTable: false,
             isLoading: false,
@@ -123,8 +208,26 @@ export default {
             messageError: '',
             dialog: false,
             dialogDelete: false,
+            dialogDeleteAttachment: false,
             members: [],
             option_members: [],
+            attachment_type: null,
+            current_attachment: null,
+            options_design: [{
+                    value: 'mockup',
+                    text: 'Mockup'
+                },
+                {
+                    value: 'design_front',
+                    text: 'Design Front'
+                },
+                {
+                    value: 'design_back',
+                    text: 'Design Back'
+                }
+            ],
+            options_seller: [],
+            options_designer: [],
             options_type: [{
                     value: 'clone',
                     text: 'Clone'
@@ -149,19 +252,7 @@ export default {
                     created_user: 'phuong_designer',
                 }
             ],
-            options_tags: [{
-                    'id': 'dog',
-                    'label': 'dog'
-                },
-                {
-                    'id': 'meo',
-                    'label': 'meo'
-                },
-                {
-                    'id': 'cat',
-                    'label': 'cat'
-                }
-            ],
+            options_tags: [],
             fields: [{
                     label: 'Id',
                     key: 'id'
@@ -188,6 +279,7 @@ export default {
                     tdClass: 'tdactions'
                 }
             ],
+            items_upload: [],
             items: [],
             editedIndex: -1,
             defaultitem: {
@@ -208,7 +300,8 @@ export default {
                 type: "active",
                 tags: "",
                 tags_array: "",
-            }
+            },
+            currentPage: 1,
         }
     },
     computed: {
@@ -229,15 +322,92 @@ export default {
         this.initialize();
     },
     methods: {
-        clickCard(id) {
-            console.log(id);
+        async reloadData() {
+            this.searchtype = 'name';
+            this.searchvalue = '';
+            await this.getCards();
+        },
+        async prevPage() {
+            this.currentPage--;
+            await this.getCards();
+        },
+        async nextPage() {
+            this.currentPage++;
+            await this.getCards();
+        },
+        async copyClipboard(message) {
+            await navigator.clipboard.writeText(message);
+            this.makeToast('success', 'Copied')
+        },
+        async downloadImage(url) {
+            var base64 = await this.$axios
+                .get(url, {
+                    responseType: "arraybuffer"
+                })
+                .then(response =>
+                    Buffer.from(response.data, "binary").toString("base64")
+                );
+            var img = new Image();
+            img.src = "data:image/jpeg;base64, " + base64;
+            return img;
+        },
+        async clickCard(id) {
+            console.log('ok');
+        },
+
+        inputFiles(files) {
+            if (files !== null) {
+                this.items_upload = []
+                for (let i = 0; i < files.length; i++) {
+                    let obj = {
+                        id: i,
+                        seller: '',
+                        name: Object.assign(files[i].name),
+                        file: Object.assign(files[i]),
+                        isUpload: false,
+                        isUploading: false
+                    }
+                    console.log(obj.name)
+                    this.items_upload.push(obj);
+                }
+            }
+        },
+        removeDesign(item) {
+            console.log(item)
+            this.items_upload = this.items_upload.filter(x => x.name != item.name);
+        },
+        uploadDesign(item) {
+            item.isUpload = false;
+            item.isUploading = true;
+            const fd = new FormData();
+            fd.append("seller", item.seller);
+            fd.append("file", item.file);
+            this.$axios.post('/cards/upload', fd, {
+                    headers: {
+                        Authorization: this.$auth.getToken('local'),
+                        'Content-Type': 'multipart/form-data'
+                    }
+                })
+                .then((response) => {
+                    item.id = response.data.id;
+                    item.isUploading = false;
+                    item.isUpload = true;
+                })
+                .catch((error) => {
+                    item.isUploading = false
+                });
         },
         formatNames(files) {
             return files.length === 1 ? files[0].name : `${files.length} files selected`
         },
-        initialize() {
+        async initialize() {
             this.isLoading = true
-            this.$axios.get('/cards', {
+            await this.getCards();
+            this.getSellers();
+            this.getDesigners();
+        },
+        async getCards() {
+            await this.$axios.get('/cards?page=' + this.currentPage + '&searchtype=' + this.searchtype + '&searchvalue=' + this.searchvalue, {
                     headers: {
                         Authorization: this.$auth.getToken('local'),
                         'Content-Type': 'application/json'
@@ -245,27 +415,91 @@ export default {
                 })
                 .then((response) => {
                     this.items = response.data
+                    if (this.items.length >= 50) {
+                        this.isShowNextPage = true;
+                    } else {
+                        this.isShowNextPage = false;
+                    }
                     this.isLoading = false;
                 })
-                .catch(function (error) {
-                    this.messageError = error.message;
-                    this.isError = true;
+                .catch((error) => {
+                    this.makeToast('danger', error.message)
+                    this.isLoading = false;
                     console.log(error);
                 });
+            window.scrollTo(0, 0);
         },
+        getSellers() {
+            this.isLoading = true
+            this.$axios.get('/accounts/sellers', {
+                    headers: {
+                        Authorization: this.$auth.getToken('local'),
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then((response) => {
+
+                    this.options_seller = []
+                    for (let i = 0; i < response.data.length; i++) {
+                        let obj = {
+                            value: response.data[i].username,
+                            text: response.data[i].fullname,
+                        }
+                        this.options_seller.push(obj);
+                    }
+                    console.log(this.options_seller)
+                    this.isLoading = false;
+                })
+                .catch((error) => {
+                    console.log(error)
+                    this.isLoading = false;
+                });
+        },
+        getDesigners() {
+            this.isLoading = true
+            this.$axios.get('/accounts/designers', {
+                    headers: {
+                        Authorization: this.$auth.getToken('local'),
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then((response) => {
+
+                    this.options_designer = []
+                    for (let i = 0; i < response.data.length; i++) {
+                        let obj = {
+                            value: response.data[i].username,
+                            text: response.data[i].fullname,
+                        }
+                        this.options_designer.push(obj);
+                    }
+                    this.isLoading = false;
+                })
+                .catch((error) => {
+                    this.isLoading = false;
+                });
+        },
+
         async add() {
             this.dialog = !this.dialog
             this.editeditem = Object.assign(this.defaultitem);
             this.editeditem.id = 0;
             console.log(this.edititem)
         },
-        async save(bvModalEvt) {
-            this.isLoading = true
+        makeToast(variant = null, message) {
+            this.$bvToast.toast(message, {
+                title: `Alert ${variant || 'default'}`,
+                variant: variant,
+                solid: true
+            })
+        },
+        async save() {
+            this.isEditLoading = true
             this.edititem.tags = this.edittag.join();
             if (this.edititem.id < 1) {
                 this.edititem.id = 0;
                 const json = JSON.stringify(this.edititem);
-                this.$axios.post('/cards', json, {
+                await this.$axios.post('/cards', json, {
                         headers: {
                             // Overwrite Axios's automatically set Content-Type
                             Authorization: this.$auth.getToken('local'),
@@ -275,41 +509,75 @@ export default {
                     .then((response) => {
                         console.log(response)
                         this.edititem = this.defaultitem;
-                        this.dialog = false;
+                        this.makeToast('success', 'Saved')
                         this.initialize();
                     })
                     .catch(function (error) {
-                        this.messageError = error.message;
-                        this.isError = true;
-                        this.isLoading = false;
-                        console.log(error);
+                        this.makeToast('danger', error.message)
                     });
             } else {
                 const json = JSON.stringify(this.edititem);
-                this.$axios.put('/cards/' + this.edititem.id, json, {
+                await this.$axios.put('/cards/' + this.edititem.id, json, {
                         headers: {
                             Authorization: this.$auth.getToken('local'),
                             'Content-Type': 'application/json'
                         }
                     })
                     .then((response) => {
-                        console.log(response.data)
-                        this.dialog = false;
+                        this.isEditLoading = false;
+                        this.makeToast('success', 'Saved')
                         this.initialize();
                     })
-                    .catch(function (error) {
-                        this.messageError = error.message;
-                        this.isError = true;
-                        this.isLoading = false;
-                        console.log(error);
+                    .catch((error) => {
+                        this.isEditLoading = false;
+                        this.makeToast('danger', error.message)
                     });
             }
+            this.isLoading = false;
+        },
+        async uploadAttachment() {
+            this.isUploadingAttachment = true;
+            const fd = new FormData();
+            fd.append("type", this.attachment_type);
+            fd.append("file", this.file);
+            await this.$axios.post('/cards/' + this.edititem.id + '/attachments/upload', fd, {
+                    headers: {
+                        Authorization: this.$auth.getToken('local'),
+                        'Content-Type': 'multipart/form-data'
+                    }
+                })
+                .then((response) => {
+
+                })
+                .catch((error) => {
+
+                });
+            await this.getAttachments();
+            this.file = null;
+            this.attachment_type = null;
+            this.isUploadingAttachment = false;
+        },
+        async getAttachments() {
+            await this.$axios.get('/cards/' + this.edititem.id + '/attachments', {
+                    headers: {
+                        // Overwrite Axios's automatically set Content-Type
+                        Authorization: this.$auth.getToken('local'),
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then((response) => {
+                    this.edit_attachments = response.data
+                })
+                .catch(function (error) {
+
+                });
         },
         async editItem(item) {
-            this.isLoading = true;
+            this.dialog = true
+            this.isEditLoading = true;
             this.editedIndex = this.items.indexOf(item)
             this.edititem = Object.assign({}, item)
-
+            this.getAttachments();
             await this.$axios.get('/cards/' + item.id, {
                     headers: {
                         // Overwrite Axios's automatically set Content-Type
@@ -322,17 +590,15 @@ export default {
                     this.edititem = response.data
                     this.edittag = this.edititem.tags.split(',')
                     console.log(this.item)
-                    this.isLoading = false;
-                    //this.$router.go()
+                    this.isEditLoading = false;
                 })
                 .catch(function (error) {
                     this.messageError = error.message;
                     this.isError = true;
-                    this.isLoading = false;
+                    this.isEditLoading = false;
                     console.log(error);
                 });
 
-            this.dialog = true
         },
         deleteItem(item) {
             this.editedIndex = this.items.indexOf(item)
@@ -358,6 +624,26 @@ export default {
                     console.log(error);
                 });
 
+        },
+        deleteAttachment(attachment) {
+
+            this.dialogDeleteAttachment = true
+            this.current_attachment = attachment;
+        },
+        async deleteAttachmentConfirm() {
+            this.isLoading = true;
+            await this.$axios.delete('/cards/' + this.edititem.id + '/attachments/' + this.current_attachment.id, {
+                    headers: {
+                        Authorization: this.$auth.getToken('local'),
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then((response) => {})
+                .catch(function (error) {});
+            await this.getAttachments();
+
+            this.dialogDeleteAttachment = false;
+            this.isLoading = false;
         },
         close() {
             this.dialog = false
@@ -386,6 +672,14 @@ export default {
     color: black;
 }
 
+.row-item-upload {
+    padding: 2px;
+}
+
+.file-name {
+    padding-top: 12px;
+}
+
 .p-3 {
     padding: 0rem !important;
 }
@@ -394,8 +688,7 @@ export default {
     min-width: 180px;
 }
 
-.col-card {
-    min-width: 300px;
-    max-width: 300px;
+.custom-select {
+    color: black;
 }
 </style>

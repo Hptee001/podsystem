@@ -9,7 +9,7 @@
                 <CCard class="p-8" style="width:500px;">
                     <CCardBody>
                         <CForm>
-                            <img src="/apple-icon-180x180.png">
+                            <img class="logo" src="https://i.ibb.co/smnjHcJ/M-U-EN-1.png">
                             <b-alert variant="danger" dismissible fade :show="isError" @dismissed="isError=false">
                                 Error: {{messageError}}
                             </b-alert>
@@ -72,3 +72,9 @@ export default {
     }
 }
 </script>
+<style >
+.logo{
+    height: 100px;
+    padding: 10px;
+}
+</style>
