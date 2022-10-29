@@ -4,7 +4,7 @@
       <CCol md="12">
         <CCard>
           <CCardHeader>
-            Traffic &amp; Sales
+            Traffic &amp; Sales 1
           </CCardHeader>
           <CCardBody>
             <CRow>
