@@ -35,7 +35,9 @@ export default {
         { src: "~/plugins/coreui-icons", mode: "client" },
         { src: "~/plugins/vue-papa-parse.js", mode: "client" },
         { src: "~/plugins/vue-json-csv.js", mode: "client" },
-        { src: "~/plugins/vuedraggable.js" }
+        { src: "~/plugins/vue-konva.js", mode: "client" },
+        { src: "~/plugins/vuedraggable.js" , mode: "client"},
+        { src: "~/plugins/vue-float-action-button.js", mode: "client" },
     ],
 
     // Auto import components: https://go.nuxtjs.dev/config-components
@@ -63,7 +65,7 @@ export default {
         icons: true
     },
     axios: {
-        baseURL: process.env.NODE_ENV !== 'production' ? "https://localhost:7000/api/" : 'https://localhost:7000/api/',
+        baseURL: process.env.NODE_ENV !== 'production' ? "https://localhost:7000/api/" : 'https://podapi.stoecom.com/api/',
         debug: process.env.DEBUG || false
     },
     /*
@@ -77,12 +79,12 @@ export default {
                     login: {
                         url: "accounts/token/",
                         method: "post",
-                        propertyName: "token"
+                        propertyName: "token",
                     },
                     user: {
                         url: "accounts/me/",
                         method: "get",
-                        propertyName: "user"
+                        propertyName: "user",
                     },
                     tokenRequired: true,
                     logout: false

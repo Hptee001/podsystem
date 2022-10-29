@@ -191,13 +191,15 @@ export default {
                         console.log(response)
                         this.edititem = this.defaultitem;
                         this.dialog = false;
+                        this.makeToast("success", "Saved");
                         this.initialize();
                         //this.$router.go()
                     })
-                    .catch(function (error) {
+                    .catch((error) =>{
                         this.messageError = error.message;
                         this.isError = true;
                         this.isLoading = false;
+                        this.makeToast("danger", error.messageError);
                         console.log(error);
                     });
             } else {
@@ -212,14 +214,15 @@ export default {
                     .then((response) => {
                         console.log(response.data)
                         this.dialog = false;
+                        this.makeToast("success", "Saved");
                         this.initialize();
                         //this.$router.go()
                     })
-                    .catch(function (error) {
+                    .catch((error) =>{
                         this.messageError = error.message;
                         this.isError = true;
                         this.isLoading = false;
-                        console.log(error);
+                        this.makeToast("danger", error.messageError);
                     });
             }
         },
@@ -275,6 +278,13 @@ export default {
                     console.log(error);
                 });
 
+        },
+         makeToast(variant = null, message) {
+            this.$bvToast.toast(message, {
+                title: `Alert ${variant || "default"}`,
+                variant: variant,
+                solid: true,
+            });
         },
         close() {
             this.dialog = false

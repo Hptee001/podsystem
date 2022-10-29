@@ -9,7 +9,7 @@
                 <CCard class="p-8" style="width:500px;">
                     <CCardBody>
                         <CForm>
-                            <img src="/apple-icon-180x180.png">
+                            <img class="logo" src="/logo_login.png">
                             <b-alert variant="danger" dismissible fade :show="isError" @dismissed="isError=false">
                                 Error: {{messageError}}
                             </b-alert>
@@ -59,8 +59,9 @@ export default {
                 await this.$auth.setToken("Bearer " + response.data.token);
                 await this.$auth.setRefreshToken('local', response.data.token);
                 await this.$auth.setUserToken(response.data.token);
+                
                 this.loading = false;
-                this.$router.push('/reports/cards')
+                this.$router.push('/reports/report-cards')
             } catch (e) {
                 this.error = 'Username or Password not valid'
                 this.isError = true;
@@ -72,3 +73,9 @@ export default {
     }
 }
 </script>
+<style >
+.logo{
+    height: 100px;
+    padding: 10px;
+}
+</style>

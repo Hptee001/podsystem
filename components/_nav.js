@@ -17,7 +17,7 @@ export default [{
             name: "Handle",
             icon: "cil-sync",
             items: [{
-                    name: "Cards",
+                    name: "Design",
                     icon: "cil-aperture",
                     to: "/handle/cards"
                 },
@@ -28,7 +28,11 @@ export default [{
             name: "Reports",
             icon: "cil-description",
             items: [
-                
+                {
+                    name: "Report Design",
+                    icon: "cil-aperture",
+                    to: "/reports/report-cards"
+                },
             ]
         },
     ]
