@@ -2,11 +2,11 @@
 <CHeader fixed with-subheader light>
     <CToggler in-header class="ml-3 d-lg-none" @click="$store.commit('toggleSidebarMobile')" />
     <CToggler in-header class="ml-3 d-md-down-none" @click="$store.commit('toggleSidebarDesktop')" />
-    <CHeaderBrand class="mx-auto d-lg-none" to="/">
+    <CHeaderBrand href="/reports/report-dashboard" class="mx-auto d-lg-none">
         <!-- <CIcon name="logo" height="48" alt="Logo"/> -->
-        <img style="padding:10px;" src="/logo_small.png" />
+        <img style="padding:10px;"  src="/logo_small.png" />
     </CHeaderBrand>
-    <CHeaderNav class="d-md-down-none mr-auto ">
+    <CHeaderNav  class="d-md-down-none mr-auto ">
         <b-link :href="role=='designer'?'/reports/report-design':'/reports/report-dashboard'"><img style="padding:10px;" height="50" src="/logo_small.png" /></b-link>
         <CDropdown v-show="role=='admin'" style="font-weight:500" togglerText="Resource" variant="nav-item">
             <CDropdownItem href="/resources/accounts">Accounts</CDropdownItem>

@@ -42,48 +42,14 @@
                 Full Address: <span v-if="!checkDifferenceAddress" style="color:red"> {{ getFullAddress}}</span>
                 <span v-else>{{ getFullAddress}}</span> 
                 <br />
-                <b-link :href="getDownloadInfoUrl"><b-badge variant="success">Download Order Info</b-badge></b-link>
+               
                 <!-- Address: {{ order.customer_address }} {{ order.customer_address2 }}, {{ order.customer_city }},
                 {{ order.customer_state }} {{ order.customer_zip }}
                 <br />
                 {{ order.customer_country }} 
                 <br />-->
                 <p v-show="order.customer_note!=''" class="p-customer-note">{{order.customer_note}}</p>
-                <b-link style="display:block" v-show="!isEditNode" @click="isEditNode=!isEditNode">
-                    <b-badge v-show="order.note==''" variant="primary">Create Note</b-badge>
-                    <p v-show="order.note!=''" class="p-note">{{order.note}}</p>
-                </b-link>
-                <div v-show="isEditNode">
-                    <b-form-textarea id="trnote" v-model="order.note" placeholder="Enter something..." rows="3" max-rows="6"></b-form-textarea>
-                    <b-button variant="success" @click="saveNote" size="sm" block>Save</b-button>
-                </div>
-                <div v-if="user_role!='seller'">
-                    <b-link v-if="!isCloneOrder" style="display:block" @click="isCloneOrder=!isCloneOrder">
-                        <b-badge pill variant="dark">Clone This Order</b-badge>
-                    </b-link>
-                    <div v-else style="padding-top:10px;padding-bottom:5px;">
-                        <label>Do you want create a clone order?</label>
-                        <b-button-group>
-                            <b-button variant="dark" @click="isCloneOrder=!isCloneOrder">
-                                No
-                            </b-button>
-                            <b-spinner v-if="isCloneOrderLoading" variant="primary"></b-spinner>
-                            <b-button v-else variant="primary" @click="cloneOrder">
-                                Yes?
-                            </b-button>
-                        </b-button-group>
-                        <br />
-                        <label v-if="order_clone!= null">
-                            <b-link @click="copyClipboard(order_clone.order_id)">Clone ID: {{order_clone.order_id}}</b-link>
-                        </label>
-                    </div>
-                </div>
-
-                <b-link v-show="user_role!='seller'" @click="enableFulfillment = !enableFulfillment">Fulfilment: {{order.fulfillment_order_id}}</b-link>
-                <div style="display:block" v-show="order.fulfillment_order_id!=''">
-                    <label>Items Cost: {{order.fulfillment_items_cost}} - Shipping Cost: {{order.fulfillment_ship_cost}}</label>
-                </div>
-                <the-tracking v-if="order.tracking_url != ''" :trackingdata="order.tracking_url"></the-tracking>
+                
             </b-col>
             <b-col cols="8" v-show="enableFulfillment ">
                 <b-badge pill variant="info">Fulfillment</b-badge><b> - Shipping Info</b>
@@ -137,6 +103,89 @@
                         <b-link :href="'https://printify.com/app/order/'+order.fulfillment_order_id" target="_blank">Fulfilment: {{order.fulfillment_order_id}}</b-link>
                     </b-col>
                 </b-row>
+            </b-col>
+        </b-row>
+        
+        <b-row>
+            <b-col>
+                <b-link  style="display:block" v-show="user_role!='seller'" @click="enableFulfillment = !enableFulfillment">Fulfilment: {{order.fulfillment_order_id}}</b-link>
+                <div style="display:block"><label>Total: {{order.order_total}} Fee: {{showFee}} - after Fee: {{showAfterFee}}</label></div>
+                <div style="display:block" v-show="order.fulfillment_order_id!=''">
+                    <label>Items Cost: {{order.fulfillment_items_cost}} - Shipping Cost: {{order.fulfillment_ship_cost}} </label>
+                </div>
+                <the-tracking v-if="order.tracking_url != ''" :trackingdata="order.tracking_url"></the-tracking>
+            </b-col>
+        </b-row>
+        <b-row>
+            <b-col>
+                <b-link style="display:block" v-show="!isEditNode" @click="isEditNode=!isEditNode">
+                    <b-badge v-show="order.note==''" variant="primary">Create Note</b-badge>
+                    <p v-show="order.note!=''" class="p-note">{{order.note}}</p>
+                </b-link>
+                <div v-show="isEditNode">
+                    <b-form-textarea id="trnote" v-model="order.note" placeholder="Enter something..." rows="3" max-rows="6"></b-form-textarea>
+                    <b-button-group style="width:100%;">
+                        <b-button variant="success" @click="saveNote" size="sm" >Save</b-button>
+                        <b-button variant="dark" @click="isEditNode=!isEditNode" size="sm" >Cancel</b-button>
+                    </b-button-group>
+                   
+                </div>
+                
+            </b-col>
+            <b-col>
+                <div v-if="user_role!='seller'">
+                    <b-link v-if="!isCloneOrder" style="display:block" @click="isCloneOrder=!isCloneOrder">
+                        <b-badge pill variant="dark">Clone This Order</b-badge>
+                    </b-link>
+                    <div v-else style="padding-top:10px;padding-bottom:5px;">
+                        <label>Do you want create a clone order?</label>
+                        <b-button-group style="width:100%;">
+                            <b-button variant="dark" @click="isCloneOrder=!isCloneOrder">
+                                No
+                            </b-button>
+                            <b-spinner v-if="isCloneOrderLoading" variant="primary"></b-spinner>
+                            <b-button v-else variant="primary" @click="cloneOrder">
+                                Yes?
+                            </b-button>
+                        </b-button-group>
+                        <br />
+                        <label v-if="order_clone!= null">
+                            <b-link @click="copyClipboard(order_clone.order_id)">Clone ID: {{order_clone.order_id}}</b-link>
+                        </label>
+                    </div>
+                </div>
+            </b-col>
+            <b-col cols="auto">
+                <b-link v-show="user_role!='seller'" v-if="!isManualFulfill" @click="isManualFulfill=!isManualFulfill"><b-badge variant="info">Manual Other Fulfill</b-badge></b-link>
+                <div v-else>
+                    <b-row>
+                        <b-col>
+                            <b-form-group label="Fulfillment Order ID">
+                                <b-input v-model="order.fulfillment_order_id"></b-input>
+                            </b-form-group>
+                            <b-form-group label="Fulfillment Item Cost">
+                                <b-input v-model="order.fulfillment_items_cost" type="number"></b-input>
+                            </b-form-group>
+                          
+                        </b-col>
+                        <b-col>
+                              <b-form-group label="Fulfillment Ship Cost">
+                                <b-input v-model="order.fulfillment_ship_cost" type="number"></b-input>
+                            </b-form-group>
+                            <b-form-group label="Tracking Url">
+                                <b-input v-model="order.tracking_url" placeholder="Format: Carrier|Number|Link"></b-input>
+                            </b-form-group>
+                          
+                        </b-col>
+                          <b-button-group style="width:100%; padding:15px;">
+                                <b-button @click="saveManualFulfillOrder" variant="primary">Save</b-button>
+                                <b-button @click="isManualFulfill=!isManualFulfill">Cancel</b-button>
+                            </b-button-group>
+                    </b-row>
+                </div>
+            </b-col>
+            <b-col style="text-align:right;">
+                 <b-link :href="getDownloadInfoUrl"><b-badge variant="success">Download Order Info</b-badge></b-link>
             </b-col>
         </b-row>
         <b-row class="r-item mt-3" v-for="(item, index) in order.items" :key="item.id">
@@ -194,6 +243,7 @@
             </b-col>
 
         </b-row>
+        <b-overlay :show="isEditLoading" no-wrap></b-overlay>
     </b-container>
     <b-modal hide-header v-model="modalViewImage" ok-only>
         <div style="text-align:center;  background:#c2c2c2">
@@ -223,6 +273,7 @@ export default {
     data() {
         return {
             user_role: '',
+            isManualFulfill:false,
             isCompletedDialog: false,
             isUpdateVariant: false,
             isEnableCreateOrder: false,
@@ -312,6 +363,14 @@ export default {
         };
     },
     computed: {
+        showFee(){
+            let fee =  0.065*(this.order.item_total+ this.order.discount_value) + 0.03*(this.order.item_total+ this.order.discount_value+this.order.shipping_value) + 0.25;
+            return fee.toFixed(2);
+        },
+        showAfterFee(){
+            let afterfee = this.order.order_total -  0.065*(this.order.item_total+ this.order.discount_value) + 0.03*(this.order.item_total+ this.order.discount_value+this.order.shipping_value) + 0.25;
+            return afterfee.toFixed(2);
+        },
         showTime() {
             return (
                 this.order.created_at.split("T")[0] +
@@ -494,7 +553,13 @@ export default {
                 });
 
         },
+        saveManualFulfillOrder(){
+            this.order.fulfillment_id= 'other';
+            this.isManualFulfill = !this.isManualFulfill;
+            this.updateOrder();
+        },
         async updateOrder() {
+            this.isEditLoading = true;
             const json = JSON.stringify(this.order);
             await this.$axios.post('ordersesty/' + this.order.id, json, {
                     headers: {
@@ -504,10 +569,13 @@ export default {
                     }
                 })
                 .then((response) => {
+            this.isEditLoading = false;
                     this.makeToast('success', 'Saved')
                     //this.initialize();
                 })
                 .catch((error) => {
+                    
+            this.isEditLoading = false;
                     this.makeToast('danger', error.message)
                 });
         },
@@ -598,7 +666,8 @@ export default {
                 });
         },
         async GetOrderFulfill() {
-            this.$axios.get('printify/fulfillment-orders/' + this.order.fulfillment_order_id, {
+            if(this.order.fulfillment_id=='printify'){
+                his.$axios.get('printify/fulfillment-orders/' + this.order.fulfillment_order_id, {
                     headers: {
                         Authorization: this.$auth.getToken('local'),
                         'Content-Type': 'application/json'
@@ -624,6 +693,8 @@ export default {
                 .catch(function (error) {
                     this.makeToast('danger', error.message)
                 });
+            }
+            
         },
         async createOrder() {
             this.isCreateOrderLoading = true;

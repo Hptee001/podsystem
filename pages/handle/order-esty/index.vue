@@ -4,7 +4,7 @@
     <b-alert variant="danger" dismissible fade :show="isError" @dismissed="isError = false">
         Error: {{ messageError }}
     </b-alert>
-    <b-container style="background:white; padding-top:10px; margin-bottom:2px;">
+    <b-container style="background:white; padding-top:10px; margin-bottom:2px; min-width:1330px">
         <b-row class="justify-content-md-center" style="width:100%">
            
             <b-col class="text-right" cols="auto">
@@ -166,7 +166,7 @@ export default {
                 id: -1,
             },
             printify: {
-                const_blueprints: [6, 12, 706, 1015, 77, 49, 80, 48, 41, 39, 880, 988, 420, 157, 32, 580, 34, 31, 561, 586, 599, 617, 33,964,610,1039,600,146,1141],
+                const_blueprints: [6, 12, 706, 1015, 77, 49, 80, 48, 41, 39, 880, 988, 420, 157, 32, 580, 34, 31, 561, 586, 599, 617, 33,964,610,1039,600,146,1141,1094],
                 options_blueprints: [],
                 options_providers: [],
                 options_variants: [],
@@ -232,6 +232,13 @@ export default {
                     label: "OUT_OF_STOCK",
                     name: "OUT_OF_STOCK",
                     color: "status-outstock",
+                    active: false,
+                    count_orders: 0
+                },
+                 {
+                    label: "TRASH",
+                    name: "TRASH",
+                    color: "status-trash",
                     active: false,
                     count_orders: 0
                 }
@@ -418,6 +425,8 @@ export default {
                             this.options_status[i].count_orders = response.data.count_out_of_stock
                         if (this.options_status[i].name == 'COMPLETED')
                             this.options_status[i].count_orders = response.data.count_completed
+                        if (this.options_status[i].name == 'TRASH')
+                            this.options_status[i].count_orders = response.data.count_trash
                     }
 
                     this.isLoading = false;
@@ -598,5 +607,9 @@ export default {
 .status-completed {
     color: #fff;
     background-color: #003a9d;
+}
+.status-trash {
+    color: #fff;
+    background-color: #d38507;
 }
 </style>

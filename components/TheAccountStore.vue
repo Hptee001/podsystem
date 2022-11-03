@@ -1,14 +1,19 @@
 <template>
-<b-card no-body>
+<b-card no-body >
     <b-card-header class="text-center">
         <h6>{{seller.fullname}}</h6>
     </b-card-header>
     <b-list-group>
         <b-list-group-item v-for="store in stores" :key="store.store" style="display:flex;">
-            {{store.store}}
-            <div style="width:90%; text-align:end">
+            <div style="width:80%;">
+                {{store.store}}
+                <the-status-store :store="store.store"></the-status-store>
+            </div>
+
+            <div style="width:20%; text-align:end">
                 <b-button @click="removeStore(store.id)" variant="danger" size="sm">X</b-button>
             </div>
+
         </b-list-group-item>
     </b-list-group>
     <b-input-group v-if="isShowInputStore">
@@ -21,7 +26,11 @@
 </template>
 
 <script>
+import TheStatusStore from './TheStatusStore.vue';
 export default {
+    components: {
+        TheStatusStore
+    },
     props: ['seller'],
     data() {
         return {

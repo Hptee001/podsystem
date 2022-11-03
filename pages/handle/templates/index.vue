@@ -70,6 +70,11 @@
                     </b-col>
 
                 </b-row>
+                <b-button variant="danger" style="margin-top:10px" block v-if="!isDialogDeleteTemplate" @click="isDialogDeleteTemplate=!isDialogDeleteTemplate">Delete Template</b-button>
+                <b-button-group style="margin-top:10px; width:100%" v-else>
+                    <b-button @click="deleteTemplate" variant="primary">Yes</b-button>
+                    <b-button @click="isDialogDeleteTemplate=!isDialogDeleteTemplate" variant="dark">No</b-button>
+                </b-button-group>
                 <b-overlay :show="isLoadImage" opacity="0.4" no-wrap></b-overlay>
             </b-card>
         </b-col>
@@ -87,6 +92,7 @@ const height = window.innerHeight;
 export default {
     data() {
         return {
+            isDialogDeleteTemplate: false,
             isFront: true,
             imageProps: [],
             isLoadImage: false,
@@ -123,6 +129,7 @@ export default {
         imageProps() {
             //this.registerImages();
         },
+
         position() {
             if (this.position == 'front') {
                 this.v_objects = []
@@ -142,6 +149,26 @@ export default {
         this.getTemplates();
     },
     methods: {
+        deleteTemplate() {
+            this.isLoading = true;
+            this.$axios.delete('/templates/' + this.edit_template.id, {
+                    headers: {
+                        Authorization: this.$auth.getToken('local'),
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then((response) => {
+                    this.isLoading = false
+                    this.makeToast('success', 'Delete Success')
+                    this.isDialogDeleteTemplate = false;
+                    location.reload();
+                })
+                .catch((error) => {
+                     this.isLoading = false
+                    this.makeToast('danger', 'Delete Failed! Try Again')
+                });
+                
+        },
         selectItemAcitve(item) {
             return (this.edit_template != null && this.edit_template.id == item.id) ? 'background:#2d2d2d' : ''
         },

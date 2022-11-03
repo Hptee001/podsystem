@@ -1,7 +1,7 @@
 <template>
 <b-container fluid>
     <b-row>
-        <b-col cols="3"  v-for="seller in options_seller" :key="seller.id">
+        <b-col cols="3" style="min-width:300px; "  v-for="seller in options_seller" :key="seller.id">
             <the-account-store :seller="seller">
 
             </the-account-store>
