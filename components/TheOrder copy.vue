@@ -188,8 +188,62 @@
                  <b-link :href="getDownloadInfoUrl"><b-badge variant="success">Download Order Info</b-badge></b-link>
             </b-col>
         </b-row>
-        <the-order-item v-for="(item, index) in order.items" :key="item.id" :order="order" :item="item" :printify="printify" :enableFulfillment="enableFulfillment" :enableCreateOrder="enableCreateOrder"></the-order-item>
-       
+        <b-row class="r-item mt-3" v-for="(item, index) in order.items" :key="item.id">
+            <b-col cols="1" style="min-width:110px;">
+                <b-link @click="viewMockup(item.image_src)">
+                    <b-img :src="item.image_src" height="100"></b-img>
+                </b-link>
+            </b-col>
+            <b-col cols="4">
+                <span style="font-weight: 500">{{ item.name }}</span> <br />
+                <span>Quantity: </span> {{ item.qty }}<br />
+                <b-row>
+                    <b-col>
+                        <span style="white-space: pre-line"> {{ item.meta }}</span>
+                    </b-col>
+                </b-row>
+            </b-col>
+            <b-col cols="auto" v-if="item.name != 'Fast Shipping'">
+                <b-input-group prepend="DesignId">
+                    <b-form-input :disabled="!order.fulfillment_order_id==''" debounce="1000" v-model="item.design_id" @update="updateDesign(item)"></b-form-input>
+                    <!-- <b-input-group-append>
+                        <b-button :disabled="!order.fulfillment_order_id==''" variant="outline-info" @click="updateDesign(item)">Update</b-button>
+                    </b-input-group-append> -->
+                </b-input-group>
+                <b-row>
+                    <the-design-view :designid="item.design_id" :itemname="item.name"></the-design-view>
+                </b-row>
+            </b-col>
+            <b-col v-show="enableFulfillment" v-if="item.name != 'Fast Shipping'">
+                <b-form-select :disabled="!order.fulfillment_order_id==''" v-model="item.style_id" @change="inputBlueprint(item.style_id, index)">
+                    <b-form-select-option :value="null">Select Style</b-form-select-option>
+                    <b-form-select-option v-for="option in printify.options_blueprints" :key="option.id" :value="option.id">
+                        {{ option.title }}
+                    </b-form-select-option>
+                </b-form-select>
+
+                <b-form-select :disabled="!order.fulfillment_order_id==''" v-model="item.provider_id" class="mt-3" @change="inputProvider(item.style_id, item.provider_id, index)">
+                    <b-form-select-option :value="null">Select Provider</b-form-select-option>
+                    <b-form-select-option v-for="option in list_options_providers[index]" :key="option.id" :value="option.providerId">
+                        {{ option.name }} - {{ option.location }} - From
+                        {{ formatPrice(option.minPrice) }}$
+                    </b-form-select-option>
+                </b-form-select>
+                <b-input-group prepend="Qty" class="mt-3">
+                    <b-form-input :disabled="!order.fulfillment_order_id==''" style="max-width:70px; text-align:right;" :min="0" :max="item.qty" v-model="item.fulfillment_qty" @change="inputVariant(item)" debounce="500" type="number">
+                    </b-form-input>
+                    <b-spinner v-show="edit_item_id==item.id"></b-spinner>
+                    <b-form-select v-show="edit_item_id!=item.id" :disabled="!order.fulfillment_order_id==''" v-model="item.variant_id" @change="inputVariant(item)">
+                        <b-form-select-option :value="null">Select Option</b-form-select-option>
+                        <b-form-select-option v-for="(option, id) in list_options_variants[index]" :key="option.id" :value="option.id">
+                           
+                            {{getOptionVariantName(option)}} 
+                        </b-form-select-option>
+                    </b-form-select>
+                </b-input-group>
+            </b-col>
+
+        </b-row>
         <b-overlay :show="isEditLoading" no-wrap></b-overlay>
     </b-container>
     <b-modal hide-header v-model="modalViewImage" ok-only>
@@ -208,7 +262,6 @@
 import Badges from '../pages/notifications/Badges.vue';
 import TheDesignView from './TheDesignView.vue';
 import TheLine from "./TheLine.vue";
-import TheOrderItem from './TheOrderItem.vue';
 import TheTracking from './TheTracking.vue';
 export default {
     props: ["id", "index", "order", "printify", "printifylength"],
@@ -217,7 +270,6 @@ export default {
         TheDesignView,
         TheTracking,
         Badges,
-        TheOrderItem,
     },
     data() {
         return {
@@ -359,8 +411,9 @@ export default {
         this.initialize();
     },
     methods: {
+       
         getOptionVariantName(option){
-            return  (option.options.color?option.options.color:'')+ (option.options.des?option.options.des:'') +'/' + option.options.size;
+            return  (option.options.color??'')+ (option.options.des??'') +'/' + option.options.size;
         },
         async initialize() {
 
