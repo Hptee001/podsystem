@@ -110,7 +110,7 @@
                 </b-row>
             </b-col>
         </b-row>
-        <b-row >
+        <b-row>
             <b-col>
                 <b-link style="display:block" v-show="!isEditNode" @click="isEditNode=!isEditNode">
                     <b-badge v-show="order.note==''" variant="primary">Create Note</b-badge>
@@ -157,13 +157,14 @@
                     <b-row style="width:100%; margin:15px;">
                         <b-col cols="12">
                             <b-input-group>
-                                <span style="padding-top:20px; padding-right:10px;">Fulfillment By: </span>
-                                <b-form-select style="display:inline" v-model="order.fulfillment_id" class="mt-3">
+                                <span style="padding-top:5px; padding-right:10px;">Fulfillment By: </span>
+                                <b-form-select style="display:inline" v-model="order.fulfillment_id" >
                                     <b-form-select-option :value="null">Select Fulfilment</b-form-select-option>
                                     <b-form-select-option v-for="option in options_fulfillment" :key="option.id" :value="option.id">
                                         {{ option.title}}
                                     </b-form-select-option>
                                 </b-form-select>
+                                <!-- <b-button v-if="order.fulfillment_id == 'printify'" @click="updateOrderCost">Get Cost Order</b-button> -->
                             </b-input-group>
 
                         </b-col>
@@ -212,7 +213,6 @@
                         </b-form-select-option>
                     </b-form-select>
                 </b-input-group>
-
             </b-col>
         </b-row>
         <the-order-item v-for="(item, index) in order.items" :key="item.id" :order="order" :fulfillment_id="order.fulfillment_id" :item="item" :printify="printify" :enableFulfillment="enableFulfillment" :enableCreateOrder="enableCreateOrder"></the-order-item>

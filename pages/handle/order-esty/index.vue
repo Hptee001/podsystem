@@ -6,7 +6,7 @@
     </b-alert>
     <b-container style="background:white; padding-top:10px; margin-bottom:2px; min-width:1330px">
         <b-row class="justify-content-md-center" style="width:100%">
-           
+
             <b-col class="text-right" cols="auto">
                 <b-input-group>
                     <b-form-select style="width:150px;" v-model="searchSeller" @input="inputSelectSeller">
@@ -35,6 +35,7 @@
                     <b-button v-if="!isbulkUpload" @click="reloadData()" variant="success">
                         <b-icon icon="arrow-clockwise"></b-icon>
                     </b-button>
+
                 </b-button-group>
             </b-col>
         </b-row>
@@ -47,7 +48,11 @@
                     <b-button variant="outline-dark" @click="getOrderByDate(-30)">30 Days</b-button>
                     <b-form-datepicker v-model="fromdate" @input="getOrders()" placeholder="From Date" locale="en-US" :date-format-options="{ weekday: 'short', month: 'short' }"></b-form-datepicker>
                     <b-form-datepicker v-model="todate" @input="getOrders()" placeholder="To Date" locale="en-US" :date-format-options="{ weekday: 'short', month: 'short' }"></b-form-datepicker>
+
                 </b-input-group>
+            </b-col>
+            <b-col style="margin-top:15px;">
+                <b-checkbox v-model="isCheckNoCost" @change="searchFromNoCost">Orders No Cost</b-checkbox>
             </b-col>
         </b-row>
         <b-row class="justify-content-md-center">
@@ -81,7 +86,13 @@
             <b-pagination style="margin-top:10px;" v-show="totalCards > perPage" v-model="currentPage" @input="onClickPagPage" :total-rows="totalCards" :per-page="perPage" last-number align="center"></b-pagination>
         </b-col>
     </b-row>
+    <b-row v-show="isSearchLoading" class="justify-content-md-center">
+        <b-col cols="auto">
+            <b-spinner variant="warning">
 
+            </b-spinner>
+        </b-col>
+    </b-row>
     <the-order v-if="!isLoading" v-for="(order, index) in items" :key="order.id" :id="order.id" :order="order" :printify="printify" :printifylength="printifylength">
 
     </the-order>
@@ -113,6 +124,9 @@ export default {
     },
     data() {
         return {
+            fromCost: 0,
+            isCheckNoCost: false,
+            toCost: 10000,
             searchStore: 'ALL',
             searchSeller: 'ALL',
             filterBy: 'item_name',
@@ -166,7 +180,7 @@ export default {
                 id: -1,
             },
             printify: {
-                const_blueprints: [6, 12, 706, 1015, 77, 49, 80, 48, 41, 39, 880, 988, 420, 157, 32, 580, 34, 31, 561, 586, 599, 617, 33,964,610,1039,600,146,1141,1094],
+                const_blueprints: [6, 12, 706, 1015, 77, 49, 80, 48, 41, 39, 880, 988, 420, 157, 32, 580, 34, 31, 561, 586, 599, 617, 33, 964, 610, 1039, 600, 146, 1141, 1094],
                 options_blueprints: [],
                 options_providers: [],
                 options_variants: [],
@@ -235,7 +249,7 @@ export default {
                     active: false,
                     count_orders: 0
                 },
-                 {
+                {
                     label: "TRASH",
                     name: "TRASH",
                     color: "status-trash",
@@ -267,7 +281,7 @@ export default {
             this.todate = moment().add(nbrday, 'days').format('YYYY-MM-DD');
             if (nbrday == -1)
                 this.todate = moment().add(nbrday, 'days').format('YYYY-MM-DD');
-            if(nbrday < -1){
+            if (nbrday < -1) {
                 this.todate = moment().format('YYYY-MM-DD');
             }
             this.getOrders();
@@ -288,6 +302,14 @@ export default {
         },
         async searchFrom() {
             this.getOrders();
+        },
+        async searchFromNoCost() {
+            if (this.isCheckNoCost) {
+                this.toCost = 0;
+            } else {
+                this.toCost = 10000;
+            }
+            await this.getOrders();
         },
         async onClickPagPage() {
             await this.getOrders();
@@ -385,10 +407,9 @@ export default {
         async getOrders() {
             this.isSearchLoading = true;
             this.items = []
-            console.log(this.searchValue)
             let query1 = '&filterby=' + this.filterBy + '&searchvalue=' + this.searchValue
             let query2 = '&searchstore=' + this.searchStore + '&searchseller=' + this.searchSeller;
-            let query3 = '&fromdate=' + this.fromdate + '&todate=' + this.todate;
+            let query3 = '&fromdate=' + this.fromdate + '&todate=' + this.todate + '&tocost=' + this.toCost;
             await this.$axios
                 .get("/ordersesty?page=" + this.currentPage +
                     '&limit=' + this.perPage + query1 + query2 + query3 + '&status=' + this.order_status, {
@@ -436,7 +457,7 @@ export default {
                     this.makeToast("danger", error.message);
                     this.isLoading = false;
                     this.isSearchLoading = false;
-                    console.log(error);
+
                 });
             window.scrollTo(0, 0);
         },
@@ -608,6 +629,7 @@ export default {
     color: #fff;
     background-color: #003a9d;
 }
+
 .status-trash {
     color: #fff;
     background-color: #d38507;

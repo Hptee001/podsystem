@@ -98,20 +98,33 @@ export default {
 
     },
     watch: {
-        fulfillment_id(value){
-            console.log(value)
+        fulfillment_id(value) {
+            if (value == 'printify') {
+                this.options_blueprints = this.printify.options_blueprints
+                if (this.item.style_id !== '' && this.item.style_id !== undefined && this.item.style_id !== null) {
+                    this.inputBlueprint(this.item.style_id);
+                    if (this.item.provider_id !== '') {
+                        this.inputProvider(this.item.style_id, this.item.provider_id)
+                    }
+                }
+            } else {
+                this.options_blueprints = []
+                this.options_providers = []
+                this.options_variants = []
+            }
         }
     },
     mounted() {
-        this.options_blueprints = this.printify.options_blueprints;
-        this.user_role = this.$auth.user.role;
-        if (this.item.style_id !== '' && this.item.style_id !== undefined) {
-            this.inputBlueprint(this.item.style_id);
-            if (this.item.provider_id !== '') {
-                this.inputProvider(this.item.style_id, this.item.provider_id)
+        if (this.order.fulfillment_id == 'printify') {
+            this.options_blueprints = this.printify.options_blueprints;
+            this.user_role = this.$auth.user.role;
+            if (this.item.style_id !== '' && this.item.style_id !== undefined) {
+                this.inputBlueprint(this.item.style_id);
+                if (this.item.provider_id !== '') {
+                    this.inputProvider(this.item.style_id, this.item.provider_id)
+                }
             }
         }
-
     },
     methods: {
         getOptionVariantName(option) {
@@ -153,7 +166,6 @@ export default {
                         }
                     })
                     .then((response) => {
-                        console.log(data)
                         for (let j = 0; j < response.data.printProviders.length; j++) {
                             let obj = {
                                 blueprintId: blueprint,
