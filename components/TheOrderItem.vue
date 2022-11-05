@@ -1,67 +1,55 @@
 <template>
-<div>
-    <b-row>
-        <b-col>
-            <b-form-select :disabled="!order.fulfillment_order_id==''" v-model="order.fulfillment_id" @input="inputFulfillment(order.fulfillment_id)">
-                <b-form-select-option :value="">Select Fulfilment</b-form-select-option>
-                <b-form-select-option v-for="option in options_fulfillments" :key="option.id" :value="option.id">
-                    {{ option.title }}
-                </b-form-select-option>
-            </b-form-select>
-        </b-col>
-    </b-row>
-    <b-row class="r-item mt-3">
-        <b-col cols="1" style="min-width:110px;">
-            <b-link @click="viewMockup(item.image_src)">
-                <b-img :src="item.image_src" height="100"></b-img>
-            </b-link>
-        </b-col>
-        <b-col cols="4">
-            <span style="font-weight: 500">{{ item.name }}</span> <br />
-            <span>Quantity: </span> {{ item.qty }}<br />
-            <b-row>
-                <b-col>
-                    <span style="white-space: pre-line"> {{ item.meta }}</span>
-                </b-col>
-            </b-row>
-        </b-col>
-        <b-col cols="auto" v-if="item.name != 'Fast Shipping'">
-            <b-input-group prepend="DesignId">
-                <b-form-input :disabled="!order.fulfillment_order_id==''" debounce="1000" v-model="item.design_id" @update="updateItem(item)"></b-form-input>
-            </b-input-group>
-            <b-row>
-                <the-design-view :designid="item.design_id" :itemname="item.name"></the-design-view>
-            </b-row>
-        </b-col>
-        <b-col v-show="enableFulfillment" v-if="item.name != 'Fast Shipping'">
+<b-row class="r-item mt-3">
+    <b-col cols="1" style="min-width:110px;">
+        <b-link @click="viewMockup(item.image_src)">
+            <b-img :src="item.image_src" height="100"></b-img>
+        </b-link>
+    </b-col>
+    <b-col cols="4">
+        <span style="font-weight: 500">{{ item.name }}</span> <br />
+        <span>Quantity: </span> {{ item.qty }}<br />
+        <b-row>
+            <b-col>
+                <span style="white-space: pre-line"> {{ item.meta }}</span>
+            </b-col>
+        </b-row>
+    </b-col>
+    <b-col cols="auto" v-if="item.name != 'Fast Shipping'">
+        <b-input-group prepend="DesignId">
+            <b-form-input :disabled="!order.fulfillment_order_id==''" debounce="1000" v-model="item.design_id" @update="updateItem(item)"></b-form-input>
+        </b-input-group>
+        <b-row>
+            <the-design-view :designid="item.design_id" :itemname="item.name"></the-design-view>
+        </b-row>
+    </b-col>
+    <b-col v-show="enableFulfillment" v-if="item.name != 'Fast Shipping'">
 
-            <b-form-select :disabled="!order.fulfillment_order_id==''" v-model="item.style_id" @input="inputBlueprint(item.style_id)">
-                <b-form-select-option :value="null">Select Style</b-form-select-option>
-                <b-form-select-option v-for="option in options_blueprints" :key="option.id" :value="option.id">
-                    {{ option.title }}
-                </b-form-select-option>
-            </b-form-select>
+        <b-form-select :disabled="!order.fulfillment_order_id==''" v-model="item.style_id" @input="inputBlueprint(item.style_id)">
+            <b-form-select-option :value="null">Select Style</b-form-select-option>
+            <b-form-select-option v-for="option in options_blueprints" :key="option.id" :value="option.id">
+                {{ option.title }}
+            </b-form-select-option>
+        </b-form-select>
 
-            <b-form-select :disabled="!order.fulfillment_order_id==''" v-model="item.provider_id" class="mt-3" @input="inputProvider(item.style_id, item.provider_id)">
-                <b-form-select-option :value="null">Select Provider</b-form-select-option>
-                <b-form-select-option v-for="option in options_providers" :key="option.id" :value="option.providerId">
-                    {{ option.name }} - {{ option.location }} - From
-                    {{ formatPrice(option.minPrice) }}$
+        <b-form-select :disabled="!order.fulfillment_order_id==''" v-model="item.provider_id" class="mt-3" @input="inputProvider(item.style_id, item.provider_id)">
+            <b-form-select-option :value="null">Select Provider</b-form-select-option>
+            <b-form-select-option v-for="option in options_providers" :key="option.id" :value="option.providerId">
+                {{ option.name }} - {{ option.location }} - From
+                {{ formatPrice(option.minPrice) }}$
+            </b-form-select-option>
+        </b-form-select>
+        <b-input-group prepend="Qty" class="mt-3">
+            <b-form-input :disabled="!order.fulfillment_order_id==''" style="max-width:70px; text-align:right;" :min="0" :max="item.qty" v-model="item.fulfillment_qty" @change="inputVariant(item)" debounce="500" type="number">
+            </b-form-input>
+            <b-spinner v-show="edit_item_id==item.id"></b-spinner>
+            <b-form-select v-show="edit_item_id!=item.id" :disabled="!order.fulfillment_order_id==''" v-model="item.variant_id" @change="inputVariant(item)">
+                <b-form-select-option :value="null">Select Option</b-form-select-option>
+                <b-form-select-option v-for="(option, id) in options_variants" :key="option.id" :value="option.id">
+                    {{getOptionVariantName(option)}}
                 </b-form-select-option>
             </b-form-select>
-            <b-input-group prepend="Qty" class="mt-3">
-                <b-form-input :disabled="!order.fulfillment_order_id==''" style="max-width:70px; text-align:right;" :min="0" :max="item.qty" v-model="item.fulfillment_qty" @change="inputVariant(item)" debounce="500" type="number">
-                </b-form-input>
-                <b-spinner v-show="edit_item_id==item.id"></b-spinner>
-                <b-form-select v-show="edit_item_id!=item.id" :disabled="!order.fulfillment_order_id==''" v-model="item.variant_id" @change="inputVariant(item)">
-                    <b-form-select-option :value="null">Select Option</b-form-select-option>
-                    <b-form-select-option v-for="(option, id) in options_variants" :key="option.id" :value="option.id">
-                        {{getOptionVariantName(option)}}
-                    </b-form-select-option>
-                </b-form-select>
-            </b-input-group>
-        </b-col>
-    </b-row>
+        </b-input-group>
+    </b-col>
     <b-overlay :show="isEditLoading" no-wrap></b-overlay>
     <b-modal hide-header v-model="modalViewImage" ok-only>
         <div style="text-align:center;  background:#c2c2c2">
@@ -71,22 +59,20 @@
     <b-modal v-model="dialog" @hidden="close" centered ok-title="Close" ok-only>
         <b-overlay :show="isEditLoading" no-wrap></b-overlay>
     </b-modal>
-
-</div>
+</b-row>
 </template>
 
 <script>
 import Badges from '../pages/notifications/Badges.vue';
 import TheDesignView from './TheDesignView.vue';
 export default {
-    props: ["order", "item", "index", "order_id", "printify", "printifylength", "enableFulfillment", "enableCreateOrder"],
+    props: ["order", "fulfillment_id", "item", "index", "order_id", "printify", "printifylength", "enableFulfillment", "enableCreateOrder"],
     components: {
         TheDesignView,
         Badges,
     },
     data() {
         return {
-
             user_role: '',
             isManualFulfill: false,
             isCompletedDialog: false,
@@ -98,15 +84,6 @@ export default {
             dialog: false,
             isEditLoading: false,
             isShowSee: false,
-            options_fulfillments: [{
-                    id: 'printify',
-                    title: 'Printify'
-                },
-                {
-                    id: 'other',
-                    title: 'Other'
-                }
-            ],
             options_blueprints: [],
             options_providers: [],
             options_variants: [],
@@ -121,7 +98,9 @@ export default {
 
     },
     watch: {
-
+        fulfillment_id(value){
+            console.log(value)
+        }
     },
     mounted() {
         this.options_blueprints = this.printify.options_blueprints;
@@ -152,16 +131,7 @@ export default {
         formatPrice(price) {
             return Number(price / 100).toFixed(2);
         },
-        async inputFulfillment(fulfillment_id) {
-            if (fulfillment_id == 'printify') {
-                this.options_blueprints = this.printify.options_blueprints;
-            } else {
-                this.options_blueprints = [];
-                this.item.style_id = '';
-                this.item.provider_id = '';
-                this.item.variant_id = '';
-            }
-        },
+
         async inputBlueprint(style_id) {
             if (style_id !== null || style_id !== '') {
                 this.getProviders(style_id);
@@ -315,87 +285,7 @@ export default {
 </script>
 
 <style>
-.mb-container {
-    background: white;
-    padding: 25px;
-    margin-bottom: 1px;
-    box-shadow: 0 2px 8px rgb(0 0 0 / 22%);
-    margin-bottom: 10px;
-    margin-top: 10px;
-}
-
 .r-item {
     margin-top: 10px;
-}
-
-.p-note {
-    color: #2d2d2d;
-    background: #bfd8ee;
-    border-radius: 10px;
-    padding: 10px;
-    text-align: start;
-    white-space: pre-line;
-    margin-bottom: 0;
-}
-
-.p-customer-note {
-    color: #2d2d2d;
-    background: #FBEAD8;
-    border-radius: 10px;
-    padding: 10px;
-    text-align: start;
-    white-space: pre-line;
-    margin-bottom: 0;
-}
-
-.status-new {
-    color: #fff;
-    background-color: #0096FF;
-}
-
-.status-created {
-    color: #fff;
-    background-color: #EF5B0C;
-}
-
-.status-inproduction {
-    color: #fff;
-    background-color: #377D71;
-}
-
-.status-shipped {
-    color: #fff;
-    background-color: #5BB318;
-}
-
-.status-cancel {
-    color: #fff;
-    background-color: #7A4495;
-}
-
-.status-issues {
-    color: #fff;
-    background-color: #A10035;
-}
-
-.status-outstock {
-    color: #fff;
-    background-color: #B9005B;
-}
-
-.status-completed {
-    color: #fff;
-    background-color: #003a9d;
-}
-
-.status-trash {
-    color: #fff;
-    background-color: #2d2d2d;
-}
-
-.form-control {
-
-    color: #2d2d2d;
-
 }
 </style>

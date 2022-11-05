@@ -24,7 +24,7 @@
                 <br />
                 {{ order.customer_name }}
                 <br />
-                <b-link @click="copyClipboard(order.order_id)">#{{ order.order_id }}</b-link>  -
+                <b-link @click="copyClipboard(order.order_id)">#{{ order.order_id }}</b-link> -
                 <b-link v-if="!dialogUpdateStatus" @click="dialogUpdateStatus=!dialogUpdateStatus">
                     <b-badge :class="class_status">{{ order.order_status }} </b-badge>
                 </b-link>
@@ -38,20 +38,25 @@
                 </b-input-group>
                 -
                 {{ showDate }}
-                <br/>
-                Full Address: <span v-if="!checkDifferenceAddress" style="color:red"> {{ getFullAddress}}</span>
-                <span v-else>{{ getFullAddress}}</span> 
                 <br />
-               
+                Full Address: <span v-if="!checkDifferenceAddress" style="color:red"> {{ getFullAddress}}</span>
+                <span v-else>{{ getFullAddress}}</span>
+                <br />
+
                 <!-- Address: {{ order.customer_address }} {{ order.customer_address2 }}, {{ order.customer_city }},
                 {{ order.customer_state }} {{ order.customer_zip }}
                 <br />
                 {{ order.customer_country }} 
                 <br />-->
                 <p v-show="order.customer_note!=''" class="p-customer-note">{{order.customer_note}}</p>
-                
+                <b-link style="display:block" v-show="user_role!='seller'" @click="enableFulfillment = !enableFulfillment">Fulfilment: {{order.fulfillment_order_id}}</b-link>
+                <div style="display:block"><label>Total: {{order.order_total}} Fee: {{showFee}} - after Fee: {{showAfterFee}}</label></div>
+                <div style="display:block" v-show="order.fulfillment_order_id!=''">
+                    <label>Items Cost: {{order.fulfillment_items_cost}} - Shipping Cost: {{order.fulfillment_ship_cost}} </label>
+                </div>
+                <the-tracking v-if="order.tracking_url != ''" :trackingdata="order.tracking_url"></the-tracking>
             </b-col>
-            <b-col cols="8" v-show="enableFulfillment ">
+            <b-col cols="8" v-show="enableFulfillment " style="margin-bottom:10px;">
                 <b-badge pill variant="info">Fulfillment</b-badge><b> - Shipping Info</b>
                 <b-row>
                     <b-col cols="3" style="padding-right:0px">
@@ -105,18 +110,7 @@
                 </b-row>
             </b-col>
         </b-row>
-        
-        <b-row>
-            <b-col>
-                <b-link  style="display:block" v-show="user_role!='seller'" @click="enableFulfillment = !enableFulfillment">Fulfilment: {{order.fulfillment_order_id}}</b-link>
-                <div style="display:block"><label>Total: {{order.order_total}} Fee: {{showFee}} - after Fee: {{showAfterFee}}</label></div>
-                <div style="display:block" v-show="order.fulfillment_order_id!=''">
-                    <label>Items Cost: {{order.fulfillment_items_cost}} - Shipping Cost: {{order.fulfillment_ship_cost}} </label>
-                </div>
-                <the-tracking v-if="order.tracking_url != ''" :trackingdata="order.tracking_url"></the-tracking>
-            </b-col>
-        </b-row>
-        <b-row>
+        <b-row >
             <b-col>
                 <b-link style="display:block" v-show="!isEditNode" @click="isEditNode=!isEditNode">
                     <b-badge v-show="order.note==''" variant="primary">Create Note</b-badge>
@@ -125,12 +119,12 @@
                 <div v-show="isEditNode">
                     <b-form-textarea id="trnote" v-model="order.note" placeholder="Enter something..." rows="3" max-rows="6"></b-form-textarea>
                     <b-button-group style="width:100%;">
-                        <b-button variant="success" @click="saveNote" size="sm" >Save</b-button>
-                        <b-button variant="dark" @click="isEditNode=!isEditNode" size="sm" >Cancel</b-button>
+                        <b-button variant="success" @click="saveNote" size="sm">Save</b-button>
+                        <b-button variant="dark" @click="isEditNode=!isEditNode" size="sm">Cancel</b-button>
                     </b-button-group>
-                   
+
                 </div>
-                
+
             </b-col>
             <b-col>
                 <div v-if="user_role!='seller'">
@@ -156,8 +150,24 @@
                 </div>
             </b-col>
             <b-col cols="auto">
-                <b-link v-show="user_role!='seller'" v-if="!isManualFulfill" @click="isManualFulfill=!isManualFulfill"><b-badge variant="info">Manual Other Fulfill</b-badge></b-link>
+                <b-link v-show="user_role!='seller'" v-if="!isManualFulfill" @click="isManualFulfill=!isManualFulfill">
+                    <b-badge variant="info">Manual Other Fulfill</b-badge>
+                </b-link>
                 <div v-else>
+                    <b-row style="width:100%; margin:15px;">
+                        <b-col cols="12">
+                            <b-input-group>
+                                <span style="padding-top:20px; padding-right:10px;">Fulfillment By: </span>
+                                <b-form-select style="display:inline" v-model="order.fulfillment_id" class="mt-3">
+                                    <b-form-select-option :value="null">Select Fulfilment</b-form-select-option>
+                                    <b-form-select-option v-for="option in options_fulfillment" :key="option.id" :value="option.id">
+                                        {{ option.title}}
+                                    </b-form-select-option>
+                                </b-form-select>
+                            </b-input-group>
+
+                        </b-col>
+                    </b-row>
                     <b-row>
                         <b-col>
                             <b-form-group label="Fulfillment Order ID">
@@ -166,30 +176,47 @@
                             <b-form-group label="Fulfillment Item Cost">
                                 <b-input v-model="order.fulfillment_items_cost" type="number"></b-input>
                             </b-form-group>
-                          
+
                         </b-col>
                         <b-col>
-                              <b-form-group label="Fulfillment Ship Cost">
+                            <b-form-group label="Fulfillment Ship Cost">
                                 <b-input v-model="order.fulfillment_ship_cost" type="number"></b-input>
                             </b-form-group>
                             <b-form-group label="Tracking Url">
                                 <b-input v-model="order.tracking_url" placeholder="Format: Carrier|Number|Link"></b-input>
                             </b-form-group>
-                          
+
                         </b-col>
-                          <b-button-group style="width:100%; padding:15px;">
-                                <b-button @click="saveManualFulfillOrder" variant="primary">Save</b-button>
-                                <b-button @click="isManualFulfill=!isManualFulfill">Cancel</b-button>
-                            </b-button-group>
+                        <b-button-group style="width:100%; padding:15px;">
+                            <b-button @click="saveManualFulfillOrder" variant="primary">Save</b-button>
+                            <b-button @click="isManualFulfill=!isManualFulfill">Cancel</b-button>
+                        </b-button-group>
                     </b-row>
                 </div>
             </b-col>
             <b-col style="text-align:right;">
-                 <b-link :href="getDownloadInfoUrl"><b-badge variant="success">Download Order Info</b-badge></b-link>
+                <b-link :href="getDownloadInfoUrl">
+                    <b-badge variant="success">Download Order Info</b-badge>
+                </b-link>
             </b-col>
         </b-row>
-        <the-order-item v-for="(item, index) in order.items" :key="item.id" :order="order" :item="item" :printify="printify" :enableFulfillment="enableFulfillment" :enableCreateOrder="enableCreateOrder"></the-order-item>
-       
+        <b-row v-show="enableFulfillment">
+            <b-col cols="8"></b-col>
+            <b-col cols="4">
+                <b-input-group>
+                    <span style="padding-top:20px; padding-right:10px;">Fulfillment By: </span>
+                    <b-form-select style="display:inline" v-model="order.fulfillment_id" class="mt-3">
+                        <b-form-select-option :value="null">Select Fulfilment</b-form-select-option>
+                        <b-form-select-option v-for="option in options_fulfillment" :key="option.id" :value="option.id">
+                            {{ option.title}}
+                        </b-form-select-option>
+                    </b-form-select>
+                </b-input-group>
+
+            </b-col>
+        </b-row>
+        <the-order-item v-for="(item, index) in order.items" :key="item.id" :order="order" :fulfillment_id="order.fulfillment_id" :item="item" :printify="printify" :enableFulfillment="enableFulfillment" :enableCreateOrder="enableCreateOrder"></the-order-item>
+
         <b-overlay :show="isEditLoading" no-wrap></b-overlay>
     </b-container>
     <b-modal hide-header v-model="modalViewImage" ok-only>
@@ -222,7 +249,7 @@ export default {
     data() {
         return {
             user_role: '',
-            isManualFulfill:false,
+            isManualFulfill: false,
             isCompletedDialog: false,
             isUpdateVariant: false,
             isEnableCreateOrder: false,
@@ -242,11 +269,15 @@ export default {
             reason: null,
             message: "",
             order_clone: null,
-            options_shops: [],
-            options_blueprints: [],
-            list_options_providers: [],
-            list_options_variants: [],
-            options_variants: [],
+            options_fulfillment: [{
+                    id: 'printify',
+                    title: 'printify'
+                },
+                {
+                    id: 'other',
+                    title: 'other'
+                },
+            ],
             options_state: [],
             options_country: [],
             options_status: [{
@@ -308,17 +339,17 @@ export default {
             shipZip: null,
             shipState: null,
             shipCountry: null,
-            edit_item_id:0,
+            edit_item_id: 0,
 
         };
     },
     computed: {
-        showFee(){
-            let fee =  0.065*(this.order.item_total+ this.order.discount_value) + 0.03*(this.order.item_total+ this.order.discount_value+this.order.shipping_value) + 0.25;
+        showFee() {
+            let fee = 0.065 * (this.order.item_total + this.order.discount_value) + 0.03 * (this.order.item_total + this.order.discount_value + this.order.shipping_value) + 0.25;
             return fee.toFixed(2);
         },
-        showAfterFee(){
-            let afterfee = this.order.order_total -  0.065*(this.order.item_total+ this.order.discount_value) + 0.03*(this.order.item_total+ this.order.discount_value+this.order.shipping_value) + 0.25;
+        showAfterFee() {
+            let afterfee = this.order.order_total - 0.065 * (this.order.item_total + this.order.discount_value) + 0.03 * (this.order.item_total + this.order.discount_value + this.order.shipping_value) + 0.25;
             return afterfee.toFixed(2);
         },
         showTime() {
@@ -333,20 +364,20 @@ export default {
         showDate() {
             return this.order.order_date.split("T")[0];
         },
-        getFullAddress(){
-            return this.order.customer_fulladdress.replace(this.order.customer_fulladdress.split('\n')[0],'').replace('USPS Verified','');
+        getFullAddress() {
+            return this.order.customer_fulladdress.replace(this.order.customer_fulladdress.split('\n')[0], '').replace('USPS Verified', '');
         },
-        getDownloadInfoUrl(){
-            return this.$axios.defaults.baseURL +'reports/generalordersitems?order_id='+this.order.order_id;
+        getDownloadInfoUrl() {
+            return this.$axios.defaults.baseURL + 'reports/generalordersitems?order_id=' + this.order.order_id;
         },
-        checkDifferenceAddress(){
-            let address = this.order.customer_name + this.order.customer_address + this.order.customer_address2+  this.order.customer_city  +  this.order.customer_state + this.order.customer_zip  + this.order.customer_country;
+        checkDifferenceAddress() {
+            let address = this.order.customer_name + this.order.customer_address + this.order.customer_address2 + this.order.customer_city + this.order.customer_state + this.order.customer_zip + this.order.customer_country;
             let addressCompare = this.order.customer_fulladdress;
-            address = address.replace(' ','').replace(/ /g,'')
-            addressCompare =addressCompare.replace(/\n|\r/g , "").replace(' ','').replace(',','').replace('USPS Verified','').replace(/ /g,'')
-           
-            if(address == addressCompare)
-              return true; 
+            address = address.replace(' ', '').replace(/ /g, '')
+            addressCompare = addressCompare.replace(/\n|\r/g, "").replace(' ', '').replace(',', '').replace('USPS Verified', '').replace(/ /g, '')
+
+            if (address == addressCompare)
+                return true;
             return false;
         }
     },
@@ -359,11 +390,10 @@ export default {
         this.initialize();
     },
     methods: {
-        getOptionVariantName(option){
-            return  (option.options.color?option.options.color:'')+ (option.options.des?option.options.des:'') +'/' + option.options.size;
+        getOptionVariantName(option) {
+            return (option.options.color ? option.options.color : '') + (option.options.des ? option.options.des : '') + '/' + option.options.size;
         },
         async initialize() {
-
             await this.getOrderItems();
             this.getStatusColor();
             if (this.order.fulfillment_order_id != '') {
@@ -385,12 +415,6 @@ export default {
                     this.shipCountry = this.printify.country[i].code;
                 }
             }
-            for (let i = 0; i < this.order.items.length; i++) {
-                if (this.order.items[i].variant_id.length > 0) {
-                    this.inputBlueprint(this.order.items[i].style_id, i);
-                    this.inputProvider(this.order.items[i].style_id, this.order.items[i].provider_id, i);
-                }
-            }
         },
         completeOrder() {
             this.order.order_status = 'COMPLETED';
@@ -408,6 +432,7 @@ export default {
             this.main_image = url;
             this.modalViewImage = true;
         },
+
         inputOrderStatus() {
             this.updateOrder();
             this.getStatusColor();
@@ -423,21 +448,8 @@ export default {
         formatPrice(price) {
             return Number(price / 100).toFixed(2);
         },
-        changeProvider(item) {
-            
-        },
         async inputCountry() {
             this.options_state = this.printify.country.filter(x => x.code == this.shipCountry)[0].states
-        },
-        async inputBlueprint(blueprint, index) {
-            for (let i = 0; i < index; i++) {
-                if (i < this.list_options_providers.length)
-                    this.list_options_providers.push([]);
-            }
-            this.list_options_providers[index] = []
-            this.list_options_variants[index] = [];
-            this.getProviders(blueprint, index);
-            this.inputProvider(blueprint,this.order.items[index].provider_id, index);
         },
         async getOrderItems() {
             await this.$axios.get('ordersesty/' + this.order.order_id + '/items', {
@@ -454,32 +466,7 @@ export default {
                     this.makeToast('danger', error.message)
                 });
             this.enableCreateOrder();
-           // console.log(this.isEnableCreateOrder) s
-        },
-        async getProviders(blueprint, index) {
-            let data = []
-            await this.$axios.get('printify/print_providers?blueprint=' + blueprint, {
-                    headers: {
-                        Authorization: this.$auth.getToken('local'),
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then((response) => {
-                    for (let j = 0; j < response.data.printProviders.length; j++) {
-                        let obj = {
-                            blueprintId: blueprint,
-                            providerId: response.data.printProviders[j].id,
-                            minPrice: response.data.printProviders[j].minPrice,
-                            name: response.data.printProviders[j].name,
-                            location: response.data.printProviders[j].location.country,
-                        }
-                        data.push(obj);
-                    }
-                })
-                .catch((error) => {
-                    this.makeToast('danger', error.message)
-                });
-            this.$set(this.list_options_providers, index, data)
+            // console.log(this.isEnableCreateOrder) s
         },
         async cloneOrder() {
             this.isCloneOrderLoading = true;
@@ -497,13 +484,13 @@ export default {
                 })
                 .catch((error) => {
                     this.isCloneOrderLoading = false;
-                   // console.log(error)
+                    // console.log(error)
                     this.makeToast('danger', error.response.data)
                 });
 
         },
-        saveManualFulfillOrder(){
-            this.order.fulfillment_id= 'other';
+        saveManualFulfillOrder() {
+            this.order.fulfillment_id = 'other';
             this.isManualFulfill = !this.isManualFulfill;
             this.updateOrder();
         },
@@ -518,13 +505,13 @@ export default {
                     }
                 })
                 .then((response) => {
-            this.isEditLoading = false;
+                    this.isEditLoading = false;
                     this.makeToast('success', 'Saved')
                     //this.initialize();
                 })
                 .catch((error) => {
-                    
-            this.isEditLoading = false;
+
+                    this.isEditLoading = false;
                     this.makeToast('danger', error.message)
                 });
         },
@@ -545,77 +532,11 @@ export default {
                     this.makeToast('danger', error.message)
                 });
         },
-        async inputProvider(blueprintId, providerId, index) {
-            if(providerId!== ''){
-                this.edit_item_id = this.order.items[index].id
-                for (let i = 0; i < index; i++) {
-                    if (i >= this.list_options_variants.length)
-                        this.list_options_variants.push([]);
-                }
-                this.list_options_variants[index] = []
-                let data = []
-                await this.$axios.get('printify/variants?blueprint=' + blueprintId + '&provider=' + providerId, {
-                        headers: {
-                            Authorization: this.$auth.getToken('local'),
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                    .then((response) => {
-                        this.edit_item_id  = 0
-                        data = response.data.variants.sort((a, b) => ((a.options.color??'') +(a.options.des??'') + a.id).localeCompare(((b.options.color??'')+(b.options.des??'') + b.id)));
-                        
-                    })
-                    .catch((error) => {
-                        this.edit_item_id  = 0
-                    //   this.makeToast('danger', error.message)
-                    });
-                //this.list_options_variants[index] = data;
-
-                this.$set(this.list_options_variants, index, data)
-            }
-        
-        },
-        async inputVariant(item) {
-            if(item.variant_id !== '' && item.provider_id !== '' && item.style_id !== ''){
-                console.log(item.variant_id)
-            this.edit_item_id = item.id;
-            const json = JSON.stringify(item);
-            this.isUpdateVariant = true;
-            await this.$axios.post('ordersesty/' + item.order_id + '/items/' + item.id, json, {
-                    headers: {
-                        // Overwrite Axios's automatically set Content-Type
-                        Authorization: this.$auth.getToken('local'),
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then((response) => {
-                    this.edit_item_id = 0;
-                    this.makeToast('success', 'Saved')
-                    //this.initialize();
-                })
-                .catch((error) =>{
-                    item.variant_id = '';
-                    item.provider_id = '';
-                    item.style_id = '';
-                    this.edit_item_id = 0;
-                    this.makeToast('danger', error.message)
-                });
-            this.isUpdateVariant = false;
-             this.edit_item_id = 0;
-            this.enableCreateOrder();
-            }else{
-                  item.variant_id = '';
-                    item.provider_id = '';
-                    item.style_id = '';
-                    this.edit_item_id = 0;
-            }
-            
-        },
         enableCreateOrder() {
             this.isEnableCreateOrder = true;
             for (let i = 0; i < this.order.items.length; i++) {
                 if (this.order.items[i].variant_id == '') {
-                  //  console.log(this.order.items[i])
+                    //  console.log(this.order.items[i])
                     this.isEnableCreateOrder = false;
                 }
             }
@@ -637,35 +558,35 @@ export default {
                 });
         },
         async GetOrderFulfill() {
-            if(this.order.fulfillment_id=='printify'){
+            if (this.order.fulfillment_id == 'printify') {
                 this.$axios.get('printify/fulfillment-orders/' + this.order.fulfillment_order_id, {
-                    headers: {
-                        Authorization: this.$auth.getToken('local'),
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then((response) => {
-                    let fulfillment_order = response.data;
-                    this.orderLabel = fulfillment_order.metadata.shop_order_label
-                    this.shipFirstName = fulfillment_order.address_to.first_name;
-                    this.shipLastName = fulfillment_order.address_to.last_name;
-                    this.shipAddress = fulfillment_order.address_to.address1;
-                    this.shipAddress2 = fulfillment_order.address_to.address2;
-                    this.shipCity = fulfillment_order.address_to.city;
-                    this.shipState = fulfillment_order.address_to.region;
-                    this.shipZip = fulfillment_order.address_to.zip;
-                    for (let i = 0; i < this.printify.country.length; i++) {
-                        if (fulfillment_order.address_to.country == this.printify.country[i].name) {
-                            this.options_state = this.printify.country[i].states
-                            this.shipCountry = this.printify.country[i].code;
+                        headers: {
+                            Authorization: this.$auth.getToken('local'),
+                            'Content-Type': 'application/json'
                         }
-                    }
-                })
-                .catch(function (error) {
-                    this.makeToast('danger', error.message)
-                });
+                    })
+                    .then((response) => {
+                        let fulfillment_order = response.data;
+                        this.orderLabel = fulfillment_order.metadata.shop_order_label
+                        this.shipFirstName = fulfillment_order.address_to.first_name;
+                        this.shipLastName = fulfillment_order.address_to.last_name;
+                        this.shipAddress = fulfillment_order.address_to.address1;
+                        this.shipAddress2 = fulfillment_order.address_to.address2;
+                        this.shipCity = fulfillment_order.address_to.city;
+                        this.shipState = fulfillment_order.address_to.region;
+                        this.shipZip = fulfillment_order.address_to.zip;
+                        for (let i = 0; i < this.printify.country.length; i++) {
+                            if (fulfillment_order.address_to.country == this.printify.country[i].name) {
+                                this.options_state = this.printify.country[i].states
+                                this.shipCountry = this.printify.country[i].code;
+                            }
+                        }
+                    })
+                    .catch(function (error) {
+                        this.makeToast('danger', error.message)
+                    });
             }
-            
+
         },
         async createOrder() {
             this.isCreateOrderLoading = true;
@@ -675,7 +596,7 @@ export default {
                 firstname: this.shipFirstName,
                 lastname: this.shipLastName,
                 ship_address: this.shipAddress,
-                ship_address2:this.shipAddress2,
+                ship_address2: this.shipAddress2,
                 ship_city: this.shipCity,
                 ship_state: this.shipState,
                 ship_zip: this.shipZip,
@@ -707,9 +628,7 @@ export default {
             }
             this.isCreateOrderLoading = false;
         },
-        filterProvider(id) {
-            return this.printify.options_blueprints;
-        },
+
         showMeta(meta) {
             return meta;
         },
@@ -752,10 +671,6 @@ export default {
     margin-top: 10px;
 }
 
-.r-item {
-    margin-top: 10px;
-}
-
 .p-note {
     color: #2d2d2d;
     background: #bfd8ee;
@@ -765,15 +680,17 @@ export default {
     white-space: pre-line;
     margin-bottom: 0;
 }
+
 .p-customer-note {
     color: #2d2d2d;
-    background:#FBEAD8;
+    background: #FBEAD8;
     border-radius: 10px;
     padding: 10px;
     text-align: start;
     white-space: pre-line;
     margin-bottom: 0;
 }
+
 .status-new {
     color: #fff;
     background-color: #0096FF;
@@ -818,9 +735,10 @@ export default {
     color: #fff;
     background-color: #2d2d2d;
 }
+
 .form-control {
-    
+
     color: #2d2d2d;
-    
+
 }
 </style>
