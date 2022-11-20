@@ -43,9 +43,9 @@
             <b-col cols="8" style="margin-top:10px;">
                 <b-input-group>
                     <b-button variant="outline-dark" @click="getOrderByDate(0)">Today</b-button>
-                    <b-button variant="outline-dark" @click="getOrderByDate(-1)">Yesterday</b-button>
-                    <b-button variant="outline-dark" @click="getOrderByDate(-7)">7 Days</b-button>
-                    <b-button variant="outline-dark" @click="getOrderByDate(-30)">30 Days</b-button>
+                    <b-button variant="outline-dark" @click="getOrderByDate(4)">Yesterday</b-button>
+                    <b-button variant="outline-dark" @click="getOrderByDate(1)">This Month</b-button>
+                    <b-button variant="outline-dark" @click="getOrderByDate(2)">Last Month</b-button>
                     <b-form-datepicker v-model="fromdate" @input="getOrders()" placeholder="From Date" locale="en-US" :date-format-options="{ weekday: 'short', month: 'short' }"></b-form-datepicker>
                     <b-form-datepicker v-model="todate" @input="getOrders()" placeholder="To Date" locale="en-US" :date-format-options="{ weekday: 'short', month: 'short' }"></b-form-datepicker>
 
@@ -93,7 +93,7 @@
             </b-spinner>
         </b-col>
     </b-row>
-    <the-order v-if="!isLoading" v-for="(order, index) in items" :key="order.id" :id="order.id" :order="order" :printify="printify" :printifylength="printifylength">
+    <the-order v-if="!isLoading" v-for="(order, index) in items" :key="order.id" :id="order.id" :order="order" :updateFulfillment="updateFulfillment">
 
     </the-order>
     <b-pagination v-model="currentPage" @input="onClickPagPage" :total-rows="totalCards" :per-page="perPage" last-number align="center"></b-pagination>
@@ -179,14 +179,7 @@ export default {
             edititem: {
                 id: -1,
             },
-            printify: {
-                const_blueprints: [6, 12, 706, 1015, 77, 49, 80, 48, 41, 39, 880, 988, 420, 157, 32, 580, 34, 31, 561, 586, 599, 617, 33, 964, 610, 1039, 600, 146, 1141, 1094],
-                options_blueprints: [],
-                options_providers: [],
-                options_variants: [],
-                country: [],
-                state: []
-            },
+
             options_status: [{
                     label: "ALL",
                     name: "ALL",
@@ -276,14 +269,41 @@ export default {
         this.initialize();
     },
     methods: {
-        getOrderByDate(nbrday) {
-            this.fromdate = moment().add(nbrday, 'days').format('YYYY-MM-DD');
-            this.todate = moment().add(nbrday, 'days').format('YYYY-MM-DD');
-            if (nbrday == -1)
-                this.todate = moment().add(nbrday, 'days').format('YYYY-MM-DD');
-            if (nbrday < -1) {
-                this.todate = moment().format('YYYY-MM-DD');
+        getOrderByDate(nbrdate ) {
+            let fromdate = moment().add(-500, 'days').format('YYYY-MM-DD')
+            let todate = moment().add(1, 'days').format('YYYY-MM-DD')
+            if (nbrdate == 3) {
+                fromdate = moment().add(-500, 'days').format('YYYY-MM-DD')
+                todate = moment().add(1, 'days').format('YYYY-MM-DD')
+            } else {
+                if (nbrdate == 1) {
+                    fromdate = moment().format('YYYY-MM') + '-01'
+                    todate = moment().add(1, 'days').format('YYYY-MM-DD')
+                } else {
+                    if (nbrdate == 2) {
+                        fromdate = moment().add(-1, 'months').startOf('month').format('YYYY-MM-DD')
+                        todate = moment().add(-1, 'months').endOf('month').format('YYYY-MM-DD')
+                    } else {
+                        if (nbrdate == 0) {
+                            fromdate = moment().format('YYYY-MM-DD')
+                            todate = moment().format('YYYY-MM-DD')
+                        } else {
+                            if (nbrdate == 4) {
+                                fromdate = moment().add(-1, 'days').format('YYYY-MM-DD')
+                                todate = moment().add(-1, 'days').format('YYYY-MM-DD')
+
+                            } else {
+                                fromdate = moment().add(nbrdate, 'days').format('YYYY-MM-DD')
+                                todate = moment().add(1, 'days').format('YYYY-MM-DD')
+                            }
+
+                        }
+
+                    }
+                }
             }
+            this.fromdate = fromdate;
+            this.todate = todate;
             this.getOrders();
         },
         enterSearchFrom(event) {
@@ -334,9 +354,9 @@ export default {
         async initialize() {
             this.isLoading = true;
             this.isShowSeachSeller = this.$auth.user.role == "seller" ? false : true;
-            await this.getCountryState();
-            this.getBlueprints();
+            //await this.getCountryState();
             await this.getOrders();
+            //this.getBlueprints();
             this.getSellers();
             this.getStores();
             this.getDesigners();
@@ -346,63 +366,38 @@ export default {
             this.options_stores = this.stores.filter(x => (x.username == this.searchSeller || this.searchSeller == 'ALL'));
             this.searchFrom();
         },
-        async getCountryState() {
-            await this.$axios.get('printify/country-states', {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then((response) => {
-                    this.printify.country = response.data
-                })
-                .catch((error) => {
-                    this.makeToast('danger', error.message)
-                });
-        },
-        async getBlueprints() {
-            await this.$axios.get('printify/blueprints', {
+        async reloadOrder(index) {
+
+            await this.$axios.get('/ordersesty/' + this.items[index].id, {
                     headers: {
                         Authorization: this.$auth.getToken('local'),
                         'Content-Type': 'application/json'
                     }
                 })
                 .then((response) => {
-                    this.printify.options_blueprints = response.data;
-                    this.printify.options_blueprints = this.printify.options_blueprints.filter(x => this.printify.const_blueprints.includes(x.id));
+                    this.$set(this.items, index, response.data);
                 })
                 .catch((error) => {
-                    this.makeToast('danger', error.message)
+
                 });
-            //this.getProviders(1);
+
         },
-        async getProviders() {
-            this.printify.options_providers = [];
-            for (let i = 0; i < this.printify.const_blueprints.length; i++) {
-                let data = null;
-                let blueprint = this.printify.const_blueprints[i];
-                this.$axios.get('printify/print_providers?blueprint=' + blueprint, {
-                        headers: {
-                            Authorization: this.$auth.getToken('local'),
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                    .then((response) => {
-                        for (let j = 0; j < response.data.printProviders.length; j++) {
-                            let obj = {
-                                blueprintId: blueprint,
-                                providerId: response.data.printProviders[j].id,
-                                minPrice: response.data.printProviders[j].minPrice,
-                                name: response.data.printProviders[j].name,
-                                location: response.data.printProviders[j].location.country,
-                            }
-                            this.printify.options_providers.push(obj);
-                        }
-                        this.printifylength = this.printify.options_providers.length;
-                    })
-                    .catch((error) => {
-                        this.makeToast('danger', error.message)
-                    });
-            }
+        async updateOrderCost(order) {
+            await this.$axios.post('fulfillments/orders-esty/' + order.order_id + '/update-cost-order' + "?fulfillment_id=" + order.fulfillment_id, {
+                    headers: {
+                        Authorization: this.$auth.getToken('local'),
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then((response) => {})
+                .catch((error) => {});
+        },
+        async updateFulfillment(order, fulfillment_order_id, status) {
+            await this.updateOrderCost(order);
+            let index = this.items.findIndex(x => x.id == order.id);
+            this.reloadOrder(index)
+            // this.orders[index].fulfillment_order_id = fulfillment_order_id;
+            // this.orders[index].order_status = 'CREATED'
         },
         async getOrders() {
             this.isSearchLoading = true;

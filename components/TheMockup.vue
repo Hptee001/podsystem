@@ -1,8 +1,7 @@
 <template>
 <div>
-
     <b-spinner v-if="isLoading" variant="primary" small type="grow"></b-spinner>
-    <b-button v-else @click="genMockup" size="sm">Download Mockup</b-button>
+    <b-button v-else v-show="templateid >0" @click="genMockup" size="sm" block>Download Mockup {{templateid}}</b-button>
 </div>
 </template>
 
@@ -15,7 +14,6 @@ export default {
             design_front: '',
             design_back: '',
             main_image: '',
-
             template: {
                 name: '',
                 width: 1080,
@@ -30,13 +28,21 @@ export default {
         }
     },
     watch: {
+        isautogen(val) {
+            if (val) {
+                this.genMockup();
+            }
 
+        }
     },
-    props: ["designid", "templateid", "name"],
-    mounted() {
-        this.getCardAttachment();
+    props: ["designid", "templateid", "name", "isautogen"],
+    async mounted() {
+        await this.getCardAttachment();
         if (this.templateid > 0) {
-            this.getTemplate();
+            await this.getTemplate();
+            if (this.isautogen) {
+                this.genMockup();
+            }
         }
     },
     methods: {
@@ -45,7 +51,7 @@ export default {
         },
         async genMockup() {
             this.isLoading = true;
-            console.log(this.design_front);
+            // console.log(this.design_front);
             await this.getTemplate();
 
             await this.getTemplateItems();
@@ -75,7 +81,7 @@ export default {
 
             let backgroundObject = this.templateitems.find(x => x.name == ('background' + position));
             let backgroundImage = new Image();
-            backgroundImage.src = backgroundObject.url+'?stopGivingMeHeadaches=true';
+            backgroundImage.src = backgroundObject.url + '?stopGivingMeHeadaches=true';
             backgroundImage.crossOrigin = "Anonymous";
             backgroundImage.onload = function () {};
             var background = new Konva.Image({
@@ -91,7 +97,7 @@ export default {
             layer.draw();
             let designObject = this.templateitems.find(x => x.name == ('design' + position));
             let designImage = new Image();
-            designImage.src = (position == 'front' ? this.design_front : this.design_back)+'?stopGivingMeHeadaches=true';
+            designImage.src = (position == 'front' ? this.design_front : this.design_back) + '?stopGivingMeHeadaches=true';
             designImage.crossOrigin = "Anonymous";
             designImage.onload = function () {};
             var design = new Konva.Image({

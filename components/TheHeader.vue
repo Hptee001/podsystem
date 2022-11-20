@@ -14,6 +14,7 @@
          <CDropdown style="font-weight:500" togglerText="Designs" variant="nav-item">
             <CDropdownItem href="/handle/cards">  Designs</CDropdownItem>
             <CDropdownItem href="/handle/templates">  Mockup</CDropdownItem>
+            <CDropdownItem href="/handle/collections">  Collections</CDropdownItem>
         </CDropdown>
          <CDropdown v-show="role!='designer'" style="font-weight:500" togglerText="Orders" variant="nav-item">
             <CDropdownItem href="/handle/order-esty">Orders Esty</CDropdownItem>

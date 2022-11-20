@@ -3,14 +3,15 @@
     <b-row>
         <b-col cols="auto">
             <b-button-group size="sm">
-                <b-button variant="outline-dark" @click="getData(-7)">7 Days</b-button>
-                <b-button variant="outline-dark" @click="getData(-15)">15 Days</b-button>
-                <b-button variant="outline-dark" @click="getData(-30)">30 Days</b-button>
+                <b-button variant="outline-dark" @click="getData(0)">Today</b-button>
+                <b-button variant="outline-dark" @click="getData(4)">Yesterday</b-button>
                 <b-button variant="outline-dark" @click="getData(1)">This month</b-button>
-                <b-button variant="outline-dark" @click="getData(0)">ALL Time</b-button>
+                <b-button variant="outline-dark" @click="getData(2)">Last Month</b-button>
+                <b-button variant="outline-dark" @click="getData(3)">ALL Time</b-button>
             </b-button-group>
         </b-col>
         <b-col style="text-align:end">
+            <span>Total: {{total_value}}</span>
             <b-link @click="onDataLabel">
                 <b-badge>Show value on Line</b-badge>
             </b-link>
@@ -41,6 +42,7 @@ export default {
     data() {
         return {
             isLoading: true,
+            total_value: 0,
             options_seller: [],
             series: [],
             chartOptions: {
@@ -115,8 +117,8 @@ export default {
             this.isLoading = !this.isLoading
         },
         async getSellers() {
-            this.isLoading = true
-            await this.$axios.get('/accounts/sellers', {
+           this.isLoading = true
+            await this.$axios.get('/accounts/sellers?type=dashboard', {
                     headers: {
                         Authorization: this.$auth.getToken('local'),
                         'Content-Type': 'application/json'
@@ -138,13 +140,14 @@ export default {
                 });
         },
         async getData(nbrdate) {
+            this.total_value = 0;
             this.isLoading = true
             this.chartOptions.xaxis.categories = [];
 
             let query = '';
             let fromdate = moment().add(-500, 'days').format('YYYY-MM-DD')
             let todate = moment().add(1, 'days').format('YYYY-MM-DD')
-            if (nbrdate == 0) {
+            if (nbrdate == 3) {
                 fromdate = moment().add(-500, 'days').format('YYYY-MM-DD')
                 todate = moment().add(1, 'days').format('YYYY-MM-DD')
             } else {
@@ -152,8 +155,26 @@ export default {
                     fromdate = moment().format('YYYY-MM') + '-01'
                     todate = moment().add(1, 'days').format('YYYY-MM-DD')
                 } else {
-                    fromdate = moment().add(nbrdate, 'days').format('YYYY-MM-DD')
-                    todate = moment().add(1, 'days').format('YYYY-MM-DD')
+                    if (nbrdate == 2) {
+                        fromdate = moment().add(-1, 'months').startOf('month').format('YYYY-MM-DD')
+                        todate = moment().add(-1, 'months').endOf('month').format('YYYY-MM-DD')
+                    } else {
+                        if (nbrdate == 0) {
+                            fromdate = moment().format('YYYY-MM-DD')
+                            todate = moment().format('YYYY-MM-DD')
+                        } else {
+                            if (nbrdate == 4) {
+                                fromdate = moment().add(-1, 'days').format('YYYY-MM-DD')
+                                todate = moment().add(-1, 'days').format('YYYY-MM-DD')
+
+                            } else {
+                                fromdate = moment().add(nbrdate, 'days').format('YYYY-MM-DD')
+                                todate = moment().add(1, 'days').format('YYYY-MM-DD')
+                            }
+
+                        }
+
+                    }
                 }
             }
             await this.$axios.get('/reports/generalorders/revenue?fromdate=' + fromdate + '&todate=' + todate, {
@@ -165,10 +186,15 @@ export default {
                 .then((response) => {
                     let max = 0;
                     let maxdate = 1;
+
+                    let afrom = moment(fromdate, "YYYY-MM-DD");
+                    let bto = moment(todate, "YYYY-MM-DD");
+                    maxdate = bto.diff(afrom, 'days')
+
                     this.series = [];
                     for (let i = 0; i < response.data.length; i++) {
-                        let a = moment(response.data[i].order_date, "YYYY-MM-DD");
-                        let b = moment()
+                        let a = moment(response.data[i].date, "YYYY-MM-DD");
+                        let b = moment(todate, "YYYY-MM-DD")
                         if (b.diff(a, 'days') > maxdate) {
                             maxdate = b.diff(a, 'days');
                         }
@@ -177,11 +203,13 @@ export default {
                         }
                     }
                     for (let i = maxdate; i >= 0; i--) {
-                        let date = moment().add(-i, 'days').format('DD/MM')
+                        let date = moment(todate, "YYYY-MM-DD").add(-i, 'days').format('DD/MM')
                         this.chartOptions.xaxis.categories.push(date)
                     }
                     this.chartOptions.yaxis.max = max;
+
                     for (let j = 0; j < this.options_seller.length; j++) {
+                        
                         var obj = {
                             name: this.options_seller[j].value,
                             data: []
@@ -189,7 +217,9 @@ export default {
                         for (let i = 0; i < this.chartOptions.xaxis.categories.length; i++) {
                             let label = this.chartOptions.xaxis.categories[i];
                             let index = -1;
+                            this.total_value = 0;
                             for (let z = 0; z < response.data.length; z++) {
+                                this.total_value += response.data[z].sales;
                                 if ((response.data[z].order_date.split('-')[2] + '/' + response.data[z].order_date.split('-')[1]) == label && response.data[z].seller == obj.name) {
                                     index = z;
                                     break;
@@ -201,9 +231,16 @@ export default {
                                 obj.data.push(0);
                             }
                         }
+                        let item_total = 0;
+                        for (let z = 0; z < response.data.length; z++) {
+                               
+                                if(response.data[z].seller == obj.name){
+                                      item_total += response.data[z].sales;
+                                }
+                            }
+                        obj.name = obj.name + ' (' + item_total + ')';
                         this.series.push(obj);
                     }
-                    console.log(this.series)
                 })
                 .catch((error) => {});
             this.isLoading = false

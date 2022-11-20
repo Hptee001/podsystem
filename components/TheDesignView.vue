@@ -8,7 +8,7 @@
                     <b-img class="img-border" :src="design_front" height="117"></b-img>
                 </b-link>
                 <label v-else>
-                    Don't have Front 
+                    Don't have Front
                 </label>
             </b-col>
             <b-col cols="auto" v-show="design_back!=''">
@@ -43,11 +43,13 @@ export default {
         }
     },
     watch: {
-        designid() {
+        async designid() {
             console.log(this.designid);
             if (this.designid > 0) {
-                this.getCard();
+                await this.getCard();
+                this.updateCardName();
                 this.getCardAttachment();
+
             }
         }
     },
@@ -74,11 +76,12 @@ export default {
                 })
                 .then((response) => {
                     this.card = response.data
+                    // this.updateCardName();
                 })
                 .catch(function (error) {
 
                 });
-            this.updateCardName();
+
         },
         makeToast(variant = null, message) {
             this.$bvToast.toast(message, {
@@ -88,7 +91,7 @@ export default {
             });
         },
         async updateCardName() {
-            if (this.card.name.trim() != this.itemname.trim() && this.itemname != '' && this.card.name != '') {
+            if (this.card.name.trim() !== this.itemname.trim() && this.itemname !== '' && this.card.name !== '') {
                 this.card.name = this.itemname
                 const json = JSON.stringify(this.card);
                 await this.$axios.put('/cards/' + this.card.id, json, {
@@ -105,6 +108,7 @@ export default {
                         this.isEditLoading = false;
                         this.makeToast('danger', error.message)
                     });
+
             }
         },
         async getCardAttachment() {

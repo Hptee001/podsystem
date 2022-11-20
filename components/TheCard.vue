@@ -5,7 +5,7 @@
 
     <div>
         <div class="ic-download">
-            <b-link style=" padding:15px;">
+            <b-link style="padding:15px;">
                 <b-spinner v-if="isDownloading" small variant="success" small></b-spinner>
                 <b-icon v-else @click="downloadFile" icon="cloud-arrow-down" style=" background: white;font-size: large;"></b-icon>
             </b-link>
@@ -24,7 +24,7 @@
                 <b-col cols="auto" class="mr-auto">
                     <b-link @click="copyClipboard(item.id)">ID: {{item.id}}</b-link> - Seller: {{item.seller}}
                 </b-col>
-                <b-col cols="auto" class="p-3">
+                <b-col cols="auto">
                     {{showTime}}
                 </b-col>
             </b-row>
@@ -32,7 +32,7 @@
                 <b-col cols="auto" class="mr-auto">
                     Designer: {{item.designer}}
                 </b-col>
-                <b-col cols="auto" class="p-3">
+                <b-col cols="auto">
                     {{item.meta}}
                 </b-col>
             </b-row>
@@ -45,35 +45,39 @@
             <b-icon icon="files"> </b-icon>
         </b-link> {{name}}
     </b-card-body>
-    <b-row>
+    <!-- <b-row>
         <b-col>
             <b-link @click="copyClipboard(item.tags)" style="color:black">
                 <b-icon icon="files"> </b-icon>
             </b-link> Tags: <span class="small text-muted">{{item.tags}}</span>
         </b-col>
-    </b-row>
+    </b-row> -->
+   
     <b-row>
         <b-col>
-            <b-button v-if="isGenMockup" @click="isGenMockup=!isGenMockup" size="sm" block>Gen Mockup</b-button>
-            <b-input-group v-else prepend="TemplateId" size="sm">
-                <b-spinner v-if="isSaveTemplate"></b-spinner>
-                <b-input v-show="!isSaveTemplate" v-model="item.template_id" @input="updateTemplate(item)"></b-input>
-
-                <the-mockup :designid="item.id" :name="item.name" :templateid="item.template_id"></the-mockup>
-            </b-input-group>
+            <b-button v-if="isGenMockup" @click="isGenMockup=!isGenMockup" size="sm" block>More</b-button>
+            <div v-else>
+                <the-collection-card-mockup :design_id="item.id" :name="item.name"></the-collection-card-mockup>
+                <b-input-group prepend="TemplateId" size="sm" style="margin-bottom:5px;">
+                    <b-spinner v-if="isSaveTemplate"></b-spinner>
+                    <b-input v-show="!isSaveTemplate" v-model="item.template_id" @input="updateTemplate(item)"></b-input>
+                    <the-mockup :designid="item.id" :name="item.name" :templateid="item.template_id" :isautogen="false"></the-mockup>
+                </b-input-group>
+                <b-button @click="isGenMockup=!isGenMockup" size="sm" block>Close Gen Mockup</b-button>
+            </div>
         </b-col>
     </b-row>
-    <b-card-footer>
-    </b-card-footer>
 </b-card>
 </template>
 
 <script>
+import TheCollectionCardMockup from './TheCollectionCardMockup.vue';
 import TheMockup from './TheMockup.vue';
 var FileSaver = require('file-saver');
 export default {
     components: {
-        TheMockup
+        TheMockup,
+        TheCollectionCardMockup
     },
     props: ['name', 'tags', 'descr', 'seller', 'designer', 'meta', 'created_at', 'created_user', 'id', 'thumbnail', 'editCard', 'updateCard', 'item'],
     data() {
@@ -89,13 +93,13 @@ export default {
         }
     },
     computed: {
+       
         showTime() {
             return this.item.created_at.split('T')[0] + ' ' + this.item.created_at.split('T')[1].split(':')[0] + ':' + this.item.created_at.split('T')[1].split(':')[1];
         }
     },
     mounted() {
         this.editItem = Object.assign({}, this.item)
-
     },
     methods: {
         async downloadFile() {

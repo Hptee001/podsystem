@@ -46,7 +46,7 @@
         }
     },
     mounted() {
-        console.log(this.value)
+        // console.log(this.value)
         this.active_label = this.ilabel==""?false:true
         this.mvalue = this.value
     },
@@ -58,9 +58,9 @@
     methods: {
       handleChange(e) {
         //  this.value=  this.mvalue 
-           console.log("value");
-          console.log("value"+e.target.value)
-          console.log(this.value)
+          //  console.log("value");
+          // console.log("value"+e.target.value)
+          // console.log(this.value)
         this.$emit('input', this.mvalue);
       },
        onContext(ctx) {

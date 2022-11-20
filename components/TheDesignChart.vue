@@ -3,14 +3,15 @@
     <b-row>
         <b-col cols="auto">
             <b-button-group size="sm">
-                <b-button variant="outline-dark" @click="getData(-7)">7 Days</b-button>
-                <b-button variant="outline-dark" @click="getData(-15)">15 Days</b-button>
-                <b-button variant="outline-dark" @click="getData(-30)">30 Days</b-button>
+                <b-button variant="outline-dark" @click="getData(0)">Today</b-button>
+                <b-button variant="outline-dark" @click="getData(4)">Yesterday</b-button>
                 <b-button variant="outline-dark" @click="getData(1)">This month</b-button>
-                <b-button variant="outline-dark" @click="getData(0)">ALL Time</b-button>
+                <b-button variant="outline-dark" @click="getData(2)">Last Month</b-button>
+                <b-button variant="outline-dark" @click="getData(3)">ALL Time</b-button>
             </b-button-group>
         </b-col>
         <b-col style="text-align:end">
+            <span>Total: {{total_value}}</span>
             <b-link @click="onDataLabel">
                 <b-badge>Show value on Line</b-badge>
             </b-link>
@@ -18,12 +19,12 @@
     </b-row>
     <b-row>
         <b-col>
-            
+
             <div id="chart2">
                 <VueApexCharts ref="table1234" v-if="!isLoading" type="line" height="400" :options="chartOptions" :series="series"></VueApexCharts>
-                 <b-spinner v-else variant="warning"></b-spinner>
+                <b-spinner v-else variant="warning"></b-spinner>
             </div>
-           
+
         </b-col>
     </b-row>
 </b-container>
@@ -45,6 +46,7 @@ export default {
             isLoading: true,
             options_designer: [],
             series: [],
+            total_value: 0,
             chartOptions: {
                 chart: {
                     height: 500,
@@ -141,13 +143,14 @@ export default {
                 });
         },
         async getData(nbrdate) {
+            this.total_value = 0
             this.isLoading = true
             this.chartOptions.xaxis.categories = [];
 
             let query = '';
             let fromdate = moment().add(-500, 'days').format('YYYY-MM-DD')
             let todate = moment().add(1, 'days').format('YYYY-MM-DD')
-            if (nbrdate == 0) {
+            if (nbrdate == 3) {
                 fromdate = moment().add(-500, 'days').format('YYYY-MM-DD')
                 todate = moment().add(1, 'days').format('YYYY-MM-DD')
             } else {
@@ -155,11 +158,30 @@ export default {
                     fromdate = moment().format('YYYY-MM') + '-01'
                     todate = moment().add(1, 'days').format('YYYY-MM-DD')
                 } else {
-                    fromdate = moment().add(nbrdate, 'days').format('YYYY-MM-DD')
-                    todate = moment().add(1, 'days').format('YYYY-MM-DD')
+                    if (nbrdate == 2) {
+                        fromdate = moment().add(-1, 'months').startOf('month').format('YYYY-MM-DD')
+                        todate = moment().add(-1, 'months').endOf('month').format('YYYY-MM-DD')
+                    } else {
+                        if (nbrdate == 0) {
+                            fromdate = moment().format('YYYY-MM-DD')
+                            todate = moment().format('YYYY-MM-DD')
+                        } else {
+                            if (nbrdate == 4) {
+                                fromdate = moment().add(-1, 'days').format('YYYY-MM-DD')
+                                todate = moment().add(-1, 'days').format('YYYY-MM-DD')
+
+                            } else {
+                                fromdate = moment().add(nbrdate, 'days').format('YYYY-MM-DD')
+                                todate = moment().add(1, 'days').format('YYYY-MM-DD')
+                            }
+
+                        }
+
+                    }
                 }
             }
-
+            console.log(todate)
+            console.log(fromdate)
             await this.$axios.get('/reports/generaldesignerperformance?fromdate=' + fromdate + '&todate=' + todate, {
                     headers: {
                         Authorization: this.$auth.getToken('local'),
@@ -170,23 +192,29 @@ export default {
                     let max = 0;
                     let maxdate = 1;
                     this.series = [];
+                    let afrom = moment(fromdate, "YYYY-MM-DD");
+                    let bto = moment(todate, "YYYY-MM-DD");
+                    maxdate = bto.diff(afrom, 'days')
+
                     for (let i = 0; i < response.data.length; i++) {
-                        let a= moment(response.data[i].date, "YYYY-MM-DD");
-                        let b = moment()
-                        if( b.diff(a,'days') > maxdate){
-                            maxdate = b.diff(a,'days');
+                        let a = moment(response.data[i].date, "YYYY-MM-DD");
+                        let b = moment(todate, "YYYY-MM-DD")
+                        if (b.diff(a, 'days') > maxdate) {
+                            maxdate = b.diff(a, 'days');
                         }
                         if (response.data[i].count_design > max) {
                             max = response.data[i].count_design
                         }
                     }
+                    console.log(maxdate)
                     for (let i = maxdate; i >= 0; i--) {
-                        let date = moment().add(-i, 'days').format('DD/MM')
-
+                        let date = moment(todate, "YYYY-MM-DD").add(-i, 'days').format('DD/MM')
                         this.chartOptions.xaxis.categories.push(date)
                     }
+                    console.log(this.chartOptions.xaxis.categories)
                     this.chartOptions.yaxis.max = max;
                     for (let j = 0; j < this.options_designer.length; j++) {
+                        let item_total = 0;
                         var obj = {
                             name: this.options_designer[j].value,
                             data: []
@@ -201,14 +229,16 @@ export default {
                                 }
                             }
                             if (index >= 0) {
+                                this.total_value += response.data[index].count_design;
+                                item_total += response.data[index].count_design;
                                 obj.data.push(response.data[index].count_design);
                             } else {
                                 obj.data.push(0);
                             }
                         }
+                        obj.name = obj.name + ' (' + item_total + ')';
                         this.series.push(obj);
                     }
-                    console.log(this.series)
 
                 })
                 .catch((error) => {});

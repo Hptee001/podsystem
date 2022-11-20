@@ -22,7 +22,7 @@
             <the-design-view :designid="item.design_id" :itemname="item.name"></the-design-view>
         </b-row>
     </b-col>
-    <b-col v-show="enableFulfillment" v-if="item.name != 'Fast Shipping'">
+    <b-col v-show="enableFulfillment" v-if="item.name != 'Fast Shipping' && item.design_id > 0">
 
         <b-form-select :disabled="!order.fulfillment_order_id==''" v-model="item.style_id" @input="inputBlueprint(item.style_id)">
             <b-form-select-option :value="null">Select Style</b-form-select-option>
@@ -50,7 +50,7 @@
             </b-form-select>
         </b-input-group>
     </b-col>
-    <b-overlay :show="isEditLoading" no-wrap></b-overlay>
+
     <b-modal hide-header v-model="modalViewImage" ok-only>
         <div style="text-align:center;  background:#c2c2c2">
             <b-img fluid :src="main_image"></b-img>
@@ -66,7 +66,7 @@
 import Badges from '../pages/notifications/Badges.vue';
 import TheDesignView from './TheDesignView.vue';
 export default {
-    props: ["order", "fulfillment_id", "item", "index", "order_id", "printify", "printifylength", "enableFulfillment", "enableCreateOrder"],
+    props: ["order", "fulfillment_id", "item", "index", "order_id", "options_blueprints", "enableFulfillment", "enableCreateOrder"],
     components: {
         TheDesignView,
         Badges,
@@ -84,7 +84,6 @@ export default {
             dialog: false,
             isEditLoading: false,
             isShowSee: false,
-            options_blueprints: [],
             options_providers: [],
             options_variants: [],
             options_variants: [],
@@ -98,38 +97,53 @@ export default {
 
     },
     watch: {
-        fulfillment_id(value) {
-            if (value == 'printify') {
-                this.options_blueprints = this.printify.options_blueprints
-                if (this.item.style_id !== '' && this.item.style_id !== undefined && this.item.style_id !== null) {
-                    this.inputBlueprint(this.item.style_id);
-                    if (this.item.provider_id !== '') {
-                        this.inputProvider(this.item.style_id, this.item.provider_id)
+        enableFulfillment(value) {
+            if (value) {
+                if (this.order.fulfillment_id !== 'other') {
+                    this.user_role = this.$auth.user.role;
+                    if (this.item.style_id !== '' && this.item.style_id !== undefined) {
+                        this.inputBlueprint(this.item.style_id);
+                        if (this.item.provider_id !== '') {
+                            this.inputProvider(this.item.style_id, this.item.provider_id)
+                        }
                     }
                 }
+            }
+        },
+        fulfillment_id(value) {
+
+            if (value !== 'other') {
+                this.options_providers = []
+                this.options_variants = []
+                // if (this.item.style_id !== '' && this.item.style_id !== undefined && this.item.style_id !== null) {
+                //     this.inputBlueprint(this.item.style_id);
+                //     if (this.item.provider_id !== '') {
+                //         this.inputProvider(this.item.style_id, this.item.provider_id)
+                //     }
+                // }
             } else {
-                this.options_blueprints = []
                 this.options_providers = []
                 this.options_variants = []
             }
         }
     },
     mounted() {
-        if (this.order.fulfillment_id == 'printify') {
-            this.options_blueprints = this.printify.options_blueprints;
-            this.user_role = this.$auth.user.role;
-            if (this.item.style_id !== '' && this.item.style_id !== undefined) {
-                this.inputBlueprint(this.item.style_id);
-                if (this.item.provider_id !== '') {
-                    this.inputProvider(this.item.style_id, this.item.provider_id)
+        if (this.enableFulfillment) {
+                if (this.order.fulfillment_id !== 'other') {
+                    this.user_role = this.$auth.user.role;
+                    if (this.item.style_id !== '' && this.item.style_id !== undefined) {
+                        this.inputBlueprint(this.item.style_id);
+                        if (this.item.provider_id !== '') {
+                            this.inputProvider(this.item.style_id, this.item.provider_id)
+                        }
+                    }
                 }
             }
-        }
     },
     methods: {
         getOptionVariantName(option) {
             let variantName = ''
-            variantName = Object.keys(option.options).map(key => `${key}: ${option.options[key]}`).join('/')
+            variantName = Object.keys(option.options).map(key => `${option.options[key]}`).join('/')
             return variantName;
             //return (option.options.color ? option.options.color : '') + (option.options.des ? option.options.des : '') + '/' + option.options.size;
         },
@@ -147,6 +161,8 @@ export default {
 
         async inputBlueprint(style_id) {
             if (style_id !== null || style_id !== '') {
+                this.options_providers = []
+                this.options_variants = []
                 this.getProviders(style_id);
             } else {
                 this.options_providers = []
@@ -159,26 +175,31 @@ export default {
             if (blueprint && blueprint !== null && blueprint !== '') {
                 let data = []
                 this.options_providers = []
-                await this.$axios.get('printify/print_providers?blueprint=' + blueprint, {
+                await this.$axios.get('fulfillments/print_providers?blueprint=' + blueprint + "&fulfillment_id=" + this.order.fulfillment_id, {
                         headers: {
                             Authorization: this.$auth.getToken('local'),
                             'Content-Type': 'application/json'
                         }
                     })
                     .then((response) => {
-                        for (let j = 0; j < response.data.printProviders.length; j++) {
-                            let obj = {
-                                blueprintId: blueprint,
-                                providerId: response.data.printProviders[j].id,
-                                minPrice: response.data.printProviders[j].minPrice,
-                                name: response.data.printProviders[j].name,
-                                location: response.data.printProviders[j].location.country,
+                        if (this.order.fulfillment_id === 'printify') {
+                            for (let j = 0; j < response.data.printProviders.length; j++) {
+                                let obj = {
+                                    blueprintId: blueprint,
+                                    providerId: response.data.printProviders[j].id,
+                                    minPrice: response.data.printProviders[j].minPrice,
+                                    name: response.data.printProviders[j].name,
+                                    location: response.data.printProviders[j].location.country,
+                                }
+                                data.push(obj);
                             }
-                            data.push(obj);
+                        } else {
+                            data = response.data;
                         }
+
                     })
                     .catch((error) => {
-                        this.makeToast('danger', error.message)
+                        // this.makeToast('danger', error.message)
                     });
                 this.options_providers = data
             }
@@ -206,7 +227,7 @@ export default {
 
                 this.options_variants = []
                 let data = []
-                await this.$axios.get('printify/variants?blueprint=' + blueprintId + '&provider=' + providerId, {
+                await this.$axios.get('fulfillments/variants?blueprint=' + blueprintId + '&provider=' + providerId + "&fulfillment_id=" + this.order.fulfillment_id, {
                         headers: {
                             Authorization: this.$auth.getToken('local'),
                             'Content-Type': 'application/json'
@@ -214,8 +235,19 @@ export default {
                     })
                     .then((response) => {
                         this.edit_item_id = 0
-                        data = response.data.variants.sort((a, b) => ((a.options.color ? a.options.color : '') + (a.options.des ? a.options.des : '') + a.id).localeCompare(((b.options.color ? b.options.color : '') + (b.options.des ? b.options.des : '') + b.id)));
-
+                        if (this.order.fulfillment_id == 'printify') {
+                            data = response.data.variants.sort((a, b) => ((a.options.color ? a.options.color : '') + (a.options.des ? a.options.des : '') + a.id).localeCompare(((b.options.color ? b.options.color : '') + (b.options.des ? b.options.des : '') + b.id)));
+                        } else {
+                            if(this.order.fulfillment_id == 'dreamship'){
+                                data = response.data.sort((a, b) => ((a.options.color ? a.options.color : '') + (a.options.des ? a.options.des : '') + a.id).localeCompare(((b.options.color ? b.options.color : '') + (b.options.des ? b.options.des : '') + b.id)));
+                            }else{
+                                if(this.order.fulfillment_id == 'burgerprints'){
+                                    data = response.data.sort((a, b) => ((a.options.color ? a.options.color : '') + (a.options.des ? a.options.des : '')).localeCompare(((b.options.color ? b.options.color : '') + (b.options.des ? b.options.des : ''))));
+                                }else
+                                data = response.data;
+                            }
+                            
+                        }
                     })
                     .catch((error) => {
                         this.edit_item_id = 0
@@ -261,9 +293,6 @@ export default {
 
         },
 
-        filterProvider(id) {
-            return this.printify.options_blueprints;
-        },
         showMeta(meta) {
             return meta;
         },

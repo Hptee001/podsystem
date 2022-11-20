@@ -23,7 +23,8 @@
                             </CInput>
                             <CRow>
                                 <CCol col="12" class="text-left">
-                                    <CButton color="primary" class="px-4" @click="login">Login</CButton>
+                                   
+                                    <CButton color="primary" class="px-4" @click="login" block> <b-spinner v-show="loading" small> </b-spinner>Login</CButton>
                                 </CCol>
                             </CRow>
                         </CForm>

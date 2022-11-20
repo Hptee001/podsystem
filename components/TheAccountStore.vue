@@ -58,10 +58,10 @@ export default {
                 .then((response) => {
                     this.stores = response.data;
                     this.isLoading = false;
-                    console.log(this.stores)
+                    // console.log(this.stores)
                 })
                 .catch((error) => {
-                    console.log(error)
+                    // console.log(error)
                     this.isLoading = false;
                 });
         },
@@ -79,7 +79,7 @@ export default {
                     this.makeToast('success', 'Saved')
                 })
                 .catch((error) => {
-                    console.log(error)
+                    // console.log(error)
                     this.isLoading = false;
                     this.makeToast('danger', error)
                 });
