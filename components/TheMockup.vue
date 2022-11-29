@@ -127,7 +127,7 @@ export default {
                 flag_all_load = true;
             }
             var dataURL = stage.toDataURL({
-                pixelRatio: 3
+                pixelRatio: 1
             });
 
             function downloadURI(uri, name) {

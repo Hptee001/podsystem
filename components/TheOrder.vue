@@ -26,7 +26,8 @@
                     {{ order.customer_name }}
                     <br />
                     <b-link @click="copyClipboard(order.order_id)">#{{ order.order_id }}</b-link> -
-                    <b-link v-if="!dialogUpdateStatus" @click="dialogUpdateStatus=!dialogUpdateStatus">
+                    <b-badge v-show="$auth.user.role =='seller'" :class="class_status">{{ order.order_status }} </b-badge>
+                    <b-link v-show="$auth.user.role !=='seller'" v-if="!dialogUpdateStatus" @click="dialogUpdateStatus=!dialogUpdateStatus">
                         <b-badge :class="class_status">{{ order.order_status }} </b-badge>
                     </b-link>
                     <b-input-group v-else style="width:150px; display:inline-flex;">
@@ -187,7 +188,7 @@
                                 <b-form-group label="Fulfillment Ship Cost">
                                     <b-input v-model="order.fulfillment_ship_cost" type="number"></b-input>
                                 </b-form-group>
-                                <b-form-group label="Tracking Url">
+                                <b-form-group v-show="$auth.user.role !== 'fulfillment'" label="Tracking Url">
                                     <b-input v-model="order.tracking_url" placeholder="Format: Carrier|Number|Link"></b-input>
                                 </b-form-group>
 
@@ -358,7 +359,7 @@ export default {
             edit_item_id: 0,
             options_blueprints: [],
             printify: {
-                const_blueprints: [6, 12, 706, 1015, 77, 49, 80, 48, 41, 39, 880, 988, 420, 157, 32, 580, 34, 31, 561, 586, 599, 617, 33, 964, 610, 1039, 600, 146, 1141, 1094, 81, 800],
+                const_blueprints: [6, 12, 706, 1015, 77, 49, 80, 48, 41, 39, 880, 988, 420, 157, 32, 580, 34, 31, 561, 586, 599, 617, 33, 964, 610, 1039, 600, 146, 1141, 1094, 81, 800, 571, 945],
                 options_blueprints: [],
                 options_providers: [],
                 options_variants: [],
