@@ -18,9 +18,11 @@
         </CDropdown>
          <CDropdown v-show="role!='designer'" style="font-weight:500" togglerText="Orders" variant="nav-item">
             <CDropdownItem href="/handle/order-esty">Orders Esty</CDropdownItem>
+            <CDropdownItem href="/handle/order-amz">Orders Amazon</CDropdownItem>
         </CDropdown>
          <CDropdown v-show="role=='admin' || role=='seller'" style="font-weight:500" togglerText="Stores" variant="nav-item">
             <CDropdownItem href="/resources/account-store">Esty Stores</CDropdownItem>
+             <CDropdownItem href="/resources/account-store-amz">Amazon Stores</CDropdownItem>
         </CDropdown>
         <CDropdown v-show="role=='admin' || role=='seller' || role=='designer'"  style="font-weight:500" togglerText="Reports" variant="nav-item">
             <CDropdownItem href="/reports/report-cards" v-show="role=='admin' || role=='seller' || role=='designer'" >Designs</CDropdownItem>

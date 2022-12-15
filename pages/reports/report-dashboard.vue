@@ -3,7 +3,7 @@
     <b-container>
         <b-row>
             <b-col>
-                <the-order-chart></the-order-chart>
+                <the-order-chart-bar></the-order-chart-bar>
             </b-col>
         </b-row>
         <b-row>
@@ -18,10 +18,10 @@
 
 <script>
 import TheDesignChart from '../../components/TheDesignChart.vue'
-import TheOrderChart from '../../components/TheOrderChart.vue'
+import TheOrderChartBar from '../../components/TheOrderChartBar.vue'
 export default {
     components: {
-        TheOrderChart,
+        TheOrderChartBar,
         TheDesignChart
     },
 }

@@ -20,7 +20,7 @@ export default {
         return {
             options_seller: [],
             isLoading: false,
-            platform:'etsy'
+            platform:'amazon'
         }
     },
     mounted() {

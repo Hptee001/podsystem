@@ -25,10 +25,17 @@
                                 {{item.file.name}}
                             </label>
                         </b-col>
-                        <b-col cols="2">
+                        <b-col cols="2" v-if="$auth.user.role !== 'seller'" >
                             <b-form-select v-model="item.seller" required :options="options_seller">
                                 <template #first>
                                     <b-form-select-option :value="null" disabled>-- Please select a Seller --</b-form-select-option>
+                                </template>
+                            </b-form-select>
+                        </b-col>
+                        <b-col cols="2" v-if="$auth.user.role !== 'designer'">
+                            <b-form-select v-model="item.designer" required :options="options_designer">
+                                <template #first>
+                                    <b-form-select-option :value="null" disabled>-- Please select a Designer --</b-form-select-option>
                                 </template>
                             </b-form-select>
                         </b-col>
@@ -415,6 +422,7 @@ export default {
             item.isUploading = true;
             const fd = new FormData();
             fd.append("seller", item.seller);
+             fd.append("designer", item.designer);
             fd.append("file", item.file);
             this.$axios.post('/cards/upload', fd, {
                     headers: {

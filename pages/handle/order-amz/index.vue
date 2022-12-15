@@ -135,7 +135,7 @@ export default {
             order_status: 'ALL',
             fromdate: '',
             todate: '',
-            platform:'etsy',
+            platform:'amazon',
             icon: "login",
             activeIcon: "login",
             size: "normal",

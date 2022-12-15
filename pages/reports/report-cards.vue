@@ -59,6 +59,8 @@
 </template>
 
 <script>
+
+import moment from 'moment'
 // import the component
 import Treeselect from '@riophae/vue-treeselect'
 // import the styles
@@ -263,25 +265,8 @@ export default {
             this.loadReport(this.input.fromdate, this.input.todate)
         },
         loadReportLastMonth() {
-            var today = new Date();
-            Date.prototype.addMonth = function (month) {
-                this.setMonth(this.getMonth() + parseInt(month));
-                return this;
-            };
-
-            var fromdate = today.addMonth(-1)
-            var dd = String(fromdate.getDate()).padStart(2, '0');
-            var mm = String(fromdate.getMonth() + 1).padStart(2, '0'); //January is 0!
-            var yyyy = fromdate.getFullYear();
-            fromdate = yyyy + '-' + mm + '-01';
-
-            var lastDay = new Date(yyyy, mm + 1, 0);
-            var dd = String(lastDay.getDate()).padStart(2, '0');
-
-            var todate = yyyy + '-' + mm + '-' + dd;
-
-            this.input.todate = todate;
-            this.input.fromdate = fromdate;
+             this.input.fromdate = moment().add(-1, 'months').startOf('month').format('YYYY-MM-DD')
+           this.input.todate = moment().add(-1, 'months').endOf('month').format('YYYY-MM-DD')
             this.loadReport(this.input.fromdate, this.input.todate)
         },
         sortingChanged(a, b, key) {

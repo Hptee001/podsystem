@@ -1,19 +1,20 @@
 <template>
-<b-card no-body >
+<b-card no-body>
     <b-card-header class="text-center">
         <h6>{{seller.fullname}}</h6>
     </b-card-header>
     <b-list-group>
         <b-list-group-item v-for="store in stores" :key="store.store" style="display:flex;">
             <div style="width:80%;">
-                {{store.store}}
-                <the-status-store :store="store.store"></the-status-store>
+                <b-link :href="platform=='etsy'?'https://www.etsy.com/shop/'+store.store:''" target="_blank">
+                    {{store.store}}
+                    <the-status-store v-if="platform=='etsy'" :store="store.store"></the-status-store>
+                </b-link>
             </div>
 
             <div style="width:20%; text-align:end">
                 <b-button @click="removeStore(store.id)" variant="danger" size="sm">X</b-button>
             </div>
-
         </b-list-group-item>
     </b-list-group>
     <b-input-group v-if="isShowInputStore">
@@ -31,7 +32,7 @@ export default {
     components: {
         TheStatusStore
     },
-    props: ['seller'],
+    props: ['seller', 'platform'],
     data() {
         return {
             stores: [],
@@ -49,7 +50,7 @@ export default {
         },
         async getStores() {
             this.isLoading = true;
-            await this.$axios.get('/accounts/' + this.seller.username + '/stores', {
+            await this.$axios.get('/accounts/' + this.seller.username + '/stores?platform='+this.platform, {
                     headers: {
                         Authorization: this.$auth.getToken('local'),
                         'Content-Type': 'application/json'
@@ -67,7 +68,7 @@ export default {
         },
         async addStore() {
             this.isLoading = true;
-            await this.$axios.post('/accounts/' + this.seller.username + '/stores?storename=' + this.storeName.toLowerCase().trim(), {
+            await this.$axios.post('/accounts/' + this.seller.username + '/stores?platform='+this.platform+'&storename=' + this.storeName.toLowerCase().trim(), {
                     headers: {
                         Authorization: this.$auth.getToken('local'),
                         'Content-Type': 'application/json'

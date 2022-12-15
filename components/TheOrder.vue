@@ -41,8 +41,10 @@
                     -
                     {{ showDate }}
                     <br />
-                    Full Address: <span v-if="!checkDifferenceAddress" style="color:red"> {{ getFullAddress}}</span>
+                    <b-link style="color:#2d2d2d; text-decoration: underline;" @click="isShowFullAdress=!isShowFullAdress">Full Address:</b-link>  <span v-if="!checkDifferenceAddress" style="color:red"> {{ getFullAddress}}</span>
                     <span v-else>{{ getFullAddress}}</span>
+                    <br/>
+                     <span v-show="isShowFullAdress">{{ order.customer_fulladdress}}</span>
                     <br />
 
                     <!-- Address: {{ order.customer_address }} {{ order.customer_address2 }}, {{ order.customer_city }},
@@ -254,6 +256,7 @@ export default {
     data() {
         return {
             user_role: '',
+            isShowFullAdress:false,
             isManualFulfill: false,
             isCompletedDialog: false,
             isUpdateVariant: false,
@@ -359,7 +362,7 @@ export default {
             edit_item_id: 0,
             options_blueprints: [],
             printify: {
-                const_blueprints: [6, 12, 706, 1015, 77, 49, 80, 48, 41, 39, 880, 988, 420, 157, 32, 580, 34, 31, 561, 586, 599, 617, 33, 964, 610, 1039, 600, 146, 1141, 1094, 81, 800, 571, 945, 603],
+                const_blueprints: [6, 12, 706, 1015, 77, 49, 80, 48, 41, 39, 880, 988, 420, 157, 32, 580, 34, 31, 561, 586, 599, 617, 33, 964, 610, 1039, 600, 146, 1141, 1094, 81, 800, 571, 945, 603, 400, 562],
                 options_blueprints: [],
                 options_providers: [],
                 options_variants: [],
