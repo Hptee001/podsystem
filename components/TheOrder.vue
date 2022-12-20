@@ -113,6 +113,8 @@
                             <b-link v-if="order.fulfillment_id == 'printify'" :href="'https://printify.com/app/order/'+order.fulfillment_order_id" target="_blank">Fulfilment: {{order.fulfillment_order_id}}</b-link>
                             <b-link v-if="order.fulfillment_id == 'dreamship'" :href="'https://app.dreamship.com/app/orders/'+order.fulfillment_order_id" target="_blank">Fulfilment: {{order.fulfillment_order_id}}</b-link>
                             <b-link v-if="order.fulfillment_id == 'burgerprints'" :href="'https://pro.burgerprints.com/dropship/orders/'+order.fulfillment_order_id" target="_blank">Fulfilment: {{order.fulfillment_order_id}}</b-link>
+                            <b-link v-if="order.fulfillment_id == 'printhigh'" :href="'https://seller.printhigh.com/order/'+order.fulfillment_order_id" target="_blank">Fulfilment: {{order.fulfillment_order_id}}</b-link>
+                            <b-link v-if="order.fulfillment_id == 'gearment'" :href="'https://account.gearment.com/order/show/'+order.fulfillment_order_id" target="_blank">Fulfilment: {{order.fulfillment_order_id}}</b-link>
                         </b-col>
                     </b-row>
                 </b-col>
@@ -291,6 +293,18 @@ export default {
                 {
                     id: 'burgerprints',
                     title: 'burgerprints'
+                },
+                 {
+                    id: 'printhigh',
+                    title: 'printhigh'
+                },
+                  {
+                    id: 'gearment',
+                    title: 'gearment'
+                },
+                 {
+                    id: 'otbzone',
+                    title: 'otbzone'
                 },
                 {
                     id: 'other',

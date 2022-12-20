@@ -103,7 +103,9 @@ export default {
                     this.user_role = this.$auth.user.role;
                     if (this.item.style_id !== '' && this.item.style_id !== undefined) {
                         this.inputBlueprint(this.item.style_id);
+                        this.item.provider_id  = "";
                         if (this.item.provider_id !== '') {
+                            this.item.variant_id = "";
                             this.inputProvider(this.item.style_id, this.item.provider_id)
                         }
                     }

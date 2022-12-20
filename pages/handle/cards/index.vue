@@ -421,8 +421,8 @@ export default {
             item.isUpload = false;
             item.isUploading = true;
             const fd = new FormData();
-            fd.append("seller", item.seller);
-             fd.append("designer", item.designer);
+            fd.append("seller", item.seller??"");
+             fd.append("designer", item.designer??"");
             fd.append("file", item.file);
             this.$axios.post('/cards/upload', fd, {
                     headers: {
