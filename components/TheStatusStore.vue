@@ -7,7 +7,7 @@
 
 <script>
 export default {
-    props: ['store'],
+    props: ['store', 'updateStatus'],
     data() {
         return {
             stores: [],
@@ -21,7 +21,7 @@ export default {
     methods: {
         async checkStore() {
             this.isLoading = true;
-            await this.$axios.get('/accounts/stores/'+this.store+'/check', {
+            await this.$axios.get('/accounts/stores/'+this.store.store+'/check', {
                     headers: {
                         Authorization: this.$auth.getToken('local'),
                         'Content-Type': 'application/json'
@@ -29,12 +29,14 @@ export default {
                 })
                 .then((response) => {
                     this.status = response.data  
+                   
                 })
                 .catch((error) => {
                     console.log(error)
                     this.isLoading = false;
                 });
                 this.isLoading = false;
+            await  this.updateStatus(this.store, this.status);
         },
     }
 }

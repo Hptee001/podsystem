@@ -115,6 +115,8 @@
                             <b-link v-if="order.fulfillment_id == 'burgerprints'" :href="'https://pro.burgerprints.com/dropship/orders/'+order.fulfillment_order_id" target="_blank">Fulfilment: {{order.fulfillment_order_id}}</b-link>
                             <b-link v-if="order.fulfillment_id == 'printhigh'" :href="'https://seller.printhigh.com/order/'+order.fulfillment_order_id" target="_blank">Fulfilment: {{order.fulfillment_order_id}}</b-link>
                             <b-link v-if="order.fulfillment_id == 'gearment'" :href="'https://account.gearment.com/order/show/'+order.fulfillment_order_id" target="_blank">Fulfilment: {{order.fulfillment_order_id}}</b-link>
+                            <b-link v-if="order.fulfillment_id == 'otbzone'" :href="'https://dashboard.otbzone.com/s/orders/'+order.fulfillment_order_id" target="_blank">Fulfilment: {{order.fulfillment_order_id}}</b-link>
+                        
                         </b-col>
                     </b-row>
                 </b-col>

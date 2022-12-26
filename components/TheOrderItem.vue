@@ -103,9 +103,8 @@ export default {
                     this.user_role = this.$auth.user.role;
                     if (this.item.style_id !== '' && this.item.style_id !== undefined) {
                         this.inputBlueprint(this.item.style_id);
-                        this.item.provider_id  = "";
+                        
                         if (this.item.provider_id !== '') {
-                            this.item.variant_id = "";
                             this.inputProvider(this.item.style_id, this.item.provider_id)
                         }
                     }
@@ -226,7 +225,6 @@ export default {
         },
         async inputProvider(blueprintId, providerId) {
             if (providerId !== '' && providerId !== null) {
-
                 this.options_variants = []
                 let data = []
                 await this.$axios.get('fulfillments/variants?blueprint=' + blueprintId + '&provider=' + providerId + "&fulfillment_id=" + this.order.fulfillment_id, {

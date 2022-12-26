@@ -1,14 +1,21 @@
 <template>
 <b-card no-body>
     <b-card-header class="text-center">
-        <h6>{{seller.fullname}}</h6>
+        <h6>{{seller.fullname}}
+            <b-link variant="outline-primary" @click="isShowDieStore=!isShowDieStore">
+                <b-icon :icon="'eye'"></b-icon>
+            </b-link>
+            <b-badge variant="success"> Live {{countLive}}</b-badge> <b-badge variant="dark"> Die {{countDie}}</b-badge>
+        </h6>
     </b-card-header>
     <b-list-group>
-        <b-list-group-item v-for="store in stores" :key="store.store" style="display:flex;">
+        <b-list-group-item v-for="store in liststores" :key="store.store" v-show="checkShowDieStore(store)" style="display:flex;">
             <div style="width:80%;">
+                {{store.status}}
                 <b-link :href="platform=='etsy'?'https://www.etsy.com/shop/'+store.store:''" target="_blank">
                     {{store.store}}
-                    <the-status-store v-if="platform=='etsy'" :store="store.store"></the-status-store>
+
+                    <the-status-store v-if="platform=='etsy'" :store="store" :updateStatus="updateStatus"></the-status-store>
                 </b-link>
             </div>
 
@@ -22,6 +29,7 @@
         <b-button variant="primary" @click="addStore">Save</b-button>
     </b-input-group>
     <b-button v-else variant="outline-primary" block @click="isShowInputStore=!isShowInputStore">Add Store</b-button>
+
     <b-overlay :show="isLoading" no-wrap></b-overlay>
 </b-card>
 </template>
@@ -35,22 +43,40 @@ export default {
     props: ['seller', 'platform'],
     data() {
         return {
+            isShowDieStore: false,
             stores: [],
             isLoading: false,
             storeName: '',
             isShowInputStore: false
         }
     },
+    computed: {
+        liststores() {
+            return this.stores;
+        },
+        countLive(){
+            return Object.values(this.stores).filter(x=>x.status !=='Die').length;
+        },
+        countDie(){
+            return Object.values(this.stores).filter(x=>x.status =='Die').length;
+        }
+
+    },
     mounted() {
         this.initital();
     },
     methods: {
+        checkShowDieStore(store) {
+            if (this.isShowDieStore)
+                return true;
+            return store.status !== 'Die'
+        },
         initital() {
             this.getStores();
         },
         async getStores() {
             this.isLoading = true;
-            await this.$axios.get('/accounts/' + this.seller.username + '/stores?platform='+this.platform, {
+            await this.$axios.get('/accounts/' + this.seller.username + '/stores?platform=' + this.platform, {
                     headers: {
                         Authorization: this.$auth.getToken('local'),
                         'Content-Type': 'application/json'
@@ -58,6 +84,9 @@ export default {
                 })
                 .then((response) => {
                     this.stores = response.data;
+                    for (let i = 0; i < this.stores.length; i++) {
+                        this.stores[i].status = ''
+                    }
                     this.isLoading = false;
                     // console.log(this.stores)
                 })
@@ -68,7 +97,7 @@ export default {
         },
         async addStore() {
             this.isLoading = true;
-            await this.$axios.post('/accounts/' + this.seller.username + '/stores?platform='+this.platform+'&storename=' + this.storeName.toLowerCase().trim(), {
+            await this.$axios.post('/accounts/' + this.seller.username + '/stores?platform=' + this.platform + '&storename=' + this.storeName.toLowerCase().trim(), {
                     headers: {
                         Authorization: this.$auth.getToken('local'),
                         'Content-Type': 'application/json'
@@ -85,6 +114,18 @@ export default {
                     this.makeToast('danger', error)
                 });
             this.isShowInputStore = false;
+        },
+        async updateStatus(store, status) {
+            console.log(store)
+            for (let i = 0; i < this.stores.length; i++) {
+                if (this.stores[i].store == store.store) {
+
+                    this.stores[i].status = status
+                    this.$set(this.stores, i, this.stores[i])
+                    break;
+                }
+            }
+
         },
         makeToast(variant = null, message) {
             this.$bvToast.toast(message, {
