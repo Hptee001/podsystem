@@ -10,7 +10,7 @@
         <span>Quantity: </span> {{ item.qty }}<br />
         <b-row>
             <b-col>
-                <span style="white-space: pre-line"> {{ item.meta }}</span>
+                <span style="white-space: pre-line; word-wrap: break-word;"> {{ item.meta }}</span>
             </b-col>
         </b-row>
     </b-col>
@@ -27,7 +27,7 @@
         <b-form-select :disabled="!order.fulfillment_order_id==''" v-model="item.style_id" @input="inputBlueprint(item.style_id)">
             <b-form-select-option :value="null">Select Style</b-form-select-option>
             <b-form-select-option v-for="option in options_blueprints" :key="option.id" :value="option.id">
-                {{ option.title }}
+                {{ option.title }} <span v-if="option.model">- {{option.model}}</span>
             </b-form-select-option>
         </b-form-select>
 
@@ -183,7 +183,7 @@ export default {
                         }
                     })
                     .then((response) => {
-                        if (this.order.fulfillment_id === 'printify') {
+                        if (this.order.fulfillment_id.includes('printify')) {
                             for (let j = 0; j < response.data.printProviders.length; j++) {
                                 let obj = {
                                     blueprintId: blueprint,
@@ -235,7 +235,7 @@ export default {
                     })
                     .then((response) => {
                         this.edit_item_id = 0
-                        if (this.order.fulfillment_id == 'printify') {
+                        if (this.order.fulfillment_id.includes('printify')) {
                             data = response.data.variants.sort((a, b) => ((a.options.color ? a.options.color : '') + (a.options.des ? a.options.des : '') + a.id).localeCompare(((b.options.color ? b.options.color : '') + (b.options.des ? b.options.des : '') + b.id)));
                         } else {
                             if(this.order.fulfillment_id == 'dreamship'){

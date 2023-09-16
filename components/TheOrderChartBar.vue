@@ -235,11 +235,7 @@ export default {
                         for (let i = 0; i < this.chartOptions.xaxis.categories.length; i++) {
                             let label = this.chartOptions.xaxis.categories[i];
                             let index = -1;
-                            this.total_value = 0;
-                            this.total_item_value = 0;
                             for (let z = 0; z < response.data.length; z++) {
-                                this.total_value += response.data[z].sales;
-                                this.total_item_value += response.data[z].itemsales;
                                 if ((response.data[z].order_date.split('-')[2] + '/' + response.data[z].order_date.split('-')[1]) == label && response.data[z].seller == obj.name) {
                                     index = z;
                                     break;
@@ -263,8 +259,16 @@ export default {
                         obj.name = obj.name + ' ' + item_total + ' (' + item_sales_total + ')';
                         this.series.push(obj);
                     }
+                    this.total_value = 0;
+                    this.total_item_value = 0;
+                    for (let z = 0; z < response.data.length; z++) {
+                        this.total_value += response.data[z].sales;
+                        this.total_item_value += response.data[z].itemsales;
+                    }
                 })
-                .catch((error) => {});
+                .catch((error) => {
+                    console.log(error)
+                });
             this.isLoading = false
         },
     },

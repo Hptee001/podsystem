@@ -17,7 +17,7 @@
                         <b-form-select-option value="ALL">ALL Stores</b-form-select-option>
                         <b-form-select-option v-for="store in options_stores" :key="store.store" :value="store.store">{{store.store}}</b-form-select-option>
                     </b-form-select>
-                     <b-form-select style="width:150px;" @input="searchFrom" v-model="searchFulfillmentValue">
+                    <b-form-select style="width:150px;" @input="searchFrom" v-model="searchFulfillmentValue">
                         <b-form-select-option value="all">ALL Fulfillments</b-form-select-option>
                         <b-form-select-option v-for="fulfillment in options_fulfillment" :key="fulfillment.id" :value="fulfillment.id">{{fulfillment.title}}</b-form-select-option>
                     </b-form-select>
@@ -126,10 +126,10 @@ export default {
     components: {
         TheOrder
     },
-    props:["platform"],
+    props: ["platform"],
     data() {
         return {
-            searchFulfillmentValue:'all',
+            searchFulfillmentValue: 'all',
             fromCost: 0,
             isCheckNoCost: false,
             toCost: 10000,
@@ -200,15 +200,15 @@ export default {
                     id: 'burgerprints',
                     title: 'burgerprints'
                 },
-                 {
+                {
                     id: 'printhigh',
                     title: 'printhigh'
                 },
-                  {
+                {
                     id: 'gearment',
                     title: 'gearment'
                 },
-                 {
+                {
                     id: 'otbzone',
                     title: 'otbzone'
                 },
@@ -306,7 +306,7 @@ export default {
         this.initialize();
     },
     methods: {
-        getOrderByDate(nbrdate ) {
+        getOrderByDate(nbrdate) {
             let fromdate = moment().add(-500, 'days').format('YYYY-MM-DD')
             let todate = moment().add(1, 'days').format('YYYY-MM-DD')
             if (nbrdate == 3) {
@@ -394,7 +394,7 @@ export default {
             //await this.getCountryState();
             await this.getOrders();
             //this.getBlueprints();
-            this.getSellers();
+            await this.getSellers();
             this.getStores();
             this.getDesigners();
 
@@ -436,14 +436,15 @@ export default {
             // this.orders[index].fulfillment_order_id = fulfillment_order_id;
             // this.orders[index].order_status = 'CREATED'
         },
+
         async getOrders() {
             this.isSearchLoading = true;
             this.items = []
-            let query1 = '&filterby=' + this.filterBy + '&searchvalue=' + this.searchValue + '&fulfillment_id='+this.searchFulfillmentValue
+            let query1 = '&filterby=' + this.filterBy + '&searchvalue=' + this.searchValue + '&fulfillment_id=' + this.searchFulfillmentValue
             let query2 = '&searchstore=' + this.searchStore + '&searchseller=' + this.searchSeller;
             let query3 = '&fromdate=' + this.fromdate + '&todate=' + this.todate + '&tocost=' + this.toCost;
             await this.$axios
-                .get("/ordersesty?platform="+this.platform+"&page=" + this.currentPage +
+                .get("/ordersesty?platform=" + this.platform + "&page=" + this.currentPage +
                     '&limit=' + this.perPage + query1 + query2 + query3 + '&status=' + this.order_status, {
                         headers: {
                             Authorization: this.$auth.getToken("local"),
@@ -462,7 +463,7 @@ export default {
                         if (this.options_status[i].name == 'ALL')
                             this.options_status[i].count_orders = response.data.count_new + response.data.count_created + response.data.count_in_production +
                             response.data.count_shipped + response.data.count_cancel + response.data.count_has_issues + response.data.count_out_of_stock +
-                             response.data.count_completed + response.data.count_trash
+                            response.data.count_completed + response.data.count_trash
                         if (this.options_status[i].name == 'NEW')
                             this.options_status[i].count_orders = response.data.count_new
                         if (this.options_status[i].name == 'CREATED')
@@ -502,9 +503,16 @@ export default {
                         'Content-Type': 'application/json'
                     }
                 })
-                .then((response) => {
+                .then(async (response) => {
                     this.stores = response.data;
+                    console.log(this.options_seller)
+                    if (this.$auth.user.role == 'fulfillment') {
+                        console.log(this.options_seller)
+                        this.stores = this.stores.filter(x => this.options_seller.findIndex(s => s.username == x.username) >= 0);
+                    }
+                    console.log(this.stores)
                     this.options_stores = this.stores;
+
                     this.isLoading = false;
                 })
                 .catch((error) => {
@@ -512,24 +520,26 @@ export default {
                     this.isLoading = false;
                 });
         },
-        getSellers() {
+
+        async getSellers() {
             this.isLoading = true;
-            this.$axios
+            await this.$axios
                 .get("/accounts/sellers", {
                     headers: {
                         Authorization: this.$auth.getToken("local"),
                         "Content-Type": "application/json",
                     },
                 })
-                .then((response) => {
+                .then(async (response) => {
                     this.options_seller = response.data;
-                    // for (let i = 0; i < response.data.length; i++) {
-                    //     let obj = {
-                    //         value: response.data[i].username,
-                    //         text: response.data[i].fullname,
-                    //     };
-                    //     this.options_seller.push(obj);
-                    // }
+                    if (this.$auth.user.role == 'fulfillment') {
+                        let result = await this.$store.dispatch('fulfillmentseller/Index', {
+                            page: 1,
+                            limit: 100
+                        });
+                        this.options_seller = this.options_seller.filter(x => result.findIndex(s => s.seller == x.username) >= 0)
+                     
+                    }
                     this.isLoading = false;
                 })
                 .catch((error) => {

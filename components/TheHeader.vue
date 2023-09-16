@@ -10,6 +10,7 @@
         <b-link :href="role=='designer'?'/reports/report-design':'/reports/report-dashboard'"><img style="padding:10px;" height="50" src="/logo_small.png" /></b-link>
         <CDropdown v-show="role=='admin'" style="font-weight:500" togglerText="Resource" variant="nav-item">
             <CDropdownItem href="/resources/accounts">Accounts</CDropdownItem>
+             <CDropdownItem href="/resources/fulfillment-sellers">Fulfillment Seller</CDropdownItem>
         </CDropdown>
          <CDropdown style="font-weight:500" togglerText="Designs" variant="nav-item">
             <CDropdownItem href="/handle/cards">  Designs</CDropdownItem>
@@ -19,10 +20,12 @@
          <CDropdown v-show="role!='designer'" style="font-weight:500" togglerText="Orders" variant="nav-item">
             <CDropdownItem href="/handle/order-esty">Orders Esty</CDropdownItem>
             <CDropdownItem href="/handle/order-amz">Orders Amazon</CDropdownItem>
+            <CDropdownItem href="/handle/order-burgerprints">Orders Burgerprints</CDropdownItem>
         </CDropdown>
          <CDropdown v-show="role=='admin' || role=='seller'" style="font-weight:500" togglerText="Stores" variant="nav-item">
             <CDropdownItem href="/resources/account-store">Esty Stores</CDropdownItem>
              <CDropdownItem href="/resources/account-store-amz">Amazon Stores</CDropdownItem>
+             <CDropdownItem href="/resources/account-store-burgerprints">BurgerPrints Stores</CDropdownItem>
         </CDropdown>
         <CDropdown v-show="role=='admin' || role=='seller' || role=='designer'"  style="font-weight:500" togglerText="Reports" variant="nav-item">
             <CDropdownItem href="/reports/report-cards" v-show="role=='admin' || role=='seller' || role=='designer'" >Designs</CDropdownItem>

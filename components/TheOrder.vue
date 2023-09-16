@@ -110,7 +110,7 @@
                         </b-col>
                         <b-col cols="4" style="text-align:center;">
                             <b-link v-if="order.fulfillment_id == 'teescape'" :href="'https://teescape.com/active/shopify/ShopifyOrders.asp'" target="_blank">Fulfilment: {{order.fulfillment_order_id}}</b-link>
-                            <b-link v-if="order.fulfillment_id == 'printify'" :href="'https://printify.com/app/order/'+order.fulfillment_order_id" target="_blank">Fulfilment: {{order.fulfillment_order_id}}</b-link>
+                            <b-link v-if="order.fulfillment_id.includes('printify')" :href="'https://printify.com/app/order/'+order.fulfillment_order_id" target="_blank">Fulfilment: {{order.fulfillment_order_id}}</b-link>
                             <b-link v-if="order.fulfillment_id == 'dreamship'" :href="'https://app.dreamship.com/app/orders/'+order.fulfillment_order_id" target="_blank">Fulfilment: {{order.fulfillment_order_id}}</b-link>
                             <b-link v-if="order.fulfillment_id == 'burgerprints'" :href="'https://pro.burgerprints.com/dropship/orders/'+order.fulfillment_order_id" target="_blank">Fulfilment: {{order.fulfillment_order_id}}</b-link>
                             <b-link v-if="order.fulfillment_id == 'printhigh'" :href="'https://seller.printhigh.com/order/'+order.fulfillment_order_id" target="_blank">Fulfilment: {{order.fulfillment_order_id}}</b-link>
@@ -284,7 +284,12 @@ export default {
             options_fulfillment: [{
                     id: 'printify',
                     title: 'printify'
-                }, {
+                },
+                {
+                    id: 'printify2',
+                    title: 'OTB Printify'
+                },
+                 {
                     id: 'teescape',
                     title: 'teescape'
                 },
@@ -360,7 +365,6 @@ export default {
                     name: "TRASH",
                     color: "status-trash",
                 },
-
             ],
             fulfillment_order_id: '',
             shopId: null,
@@ -378,7 +382,7 @@ export default {
             edit_item_id: 0,
             options_blueprints: [],
             printify: {
-                const_blueprints: [6, 12, 706, 1015, 77, 49, 80, 48, 41, 39, 880, 988, 420, 157, 32, 580, 34, 31, 561, 586, 599, 617, 33, 964, 610, 1039, 600, 146, 1141, 1094, 81, 800, 571, 945, 603, 400, 562, 627, 314],
+                const_blueprints: [1296,1256,632, 1268, 478, 750, 1307, 598, 6, 11, 12, 706, 1015, 77, 49, 80, 48, 41, 39, 880, 988, 420, 157, 32, 580, 34, 31, 561, 586, 599, 617, 33, 964, 610, 1039, 600, 146, 1141, 1094, 81, 800, 571, 945, 603, 400, 562, 627, 314, 638],
                 options_blueprints: [],
                 options_providers: [],
                 options_variants: [],
@@ -415,7 +419,10 @@ export default {
             return this.order.order_date.split("T")[0];
         },
         getFullAddress() {
-            return this.order.customer_fulladdress.replace(this.order.customer_fulladdress.split('\n')[0], '').replace('USPS Verified', '');
+            let address = this.order.customer_fulladdress.replace(this.order.customer_fulladdress.split('\n')[0], '').replace('USPS Verified', '');
+            if(address.length < 20)
+                return this.order.customer_fulladdress;
+            return address+ ' ' + this.order.customer_country;
         },
         getDownloadInfoUrl() {
             return this.$axios.defaults.baseURL + 'reports/generalordersitems?order_id=' + this.order.order_id;
@@ -445,7 +452,7 @@ export default {
                     }
                 }
 
-                if (this.order.fulfillment_order_id != '' && this.order.fulfillment_id == 'printify') {
+                if (this.order.fulfillment_order_id != '' && this.order.fulfillment_id.includes('printify')) {
                     this.GetOrderFulfill();
                 } else {
 
@@ -508,7 +515,7 @@ export default {
                         }
                     })
                     .then((response) => {
-                        if (this.order.fulfillment_id == "printify") {
+                        if (this.order.fulfillment_id.includes("printify")) {
                             this.printify.options_blueprints = response.data;
                             this.printify.options_blueprints = this.printify.options_blueprints.filter(x => this.printify.const_blueprints.includes(x.id));
                             this.options_blueprints = Object.assign(this.printify.options_blueprints);
@@ -667,7 +674,7 @@ export default {
         },
 
         async GetOrderFulfill() {
-            if (this.order.fulfillment_id == 'printify') {
+            if (this.order.fulfillment_id.includes('printify')) {
                 this.$axios.get('fulfillments/fulfillment-orders/' + this.order.fulfillment_order_id + "?fulfillment_id=" + this.order.fulfillment_id, {
                         headers: {
                             Authorization: this.$auth.getToken('local'),

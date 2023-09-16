@@ -53,6 +53,7 @@ export default {
         async login() {
             this.loading = true;
             try {
+                delete this.$axios.defaults.headers.common["Authorization"];
                 const response = await this.$axios.post('accounts/token/', {
                     username: this.account.username,
                     password: this.account.password
