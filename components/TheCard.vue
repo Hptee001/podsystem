@@ -53,7 +53,7 @@
         </b-col>
     </b-row> -->
    
-    <b-row>
+    <b-row v-if="item.type != 'video'">
         <b-col>
             <b-button v-if="isGenMockup" @click="isGenMockup=!isGenMockup" size="sm" block>More</b-button>
             <div v-else>

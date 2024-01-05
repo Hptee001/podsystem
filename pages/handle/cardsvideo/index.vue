@@ -18,7 +18,7 @@
             <b-form-file multiple :file-name-formatter="formatNames" @input="inputFiles" v-model="files"></b-form-file>
             <div style="margin:2px;"></div>
             <div v-for="(item,index) in items_upload" :key="index">
-                <b-form @submit.prevent="uploadDesign(item)">
+                <b-form @submit.prevent="uploadVideo(item)">
                     <b-row class="row-item-upload">
                         <b-col cols="2">
                             <label class="file-name">
@@ -33,7 +33,7 @@
                             </b-form-select>
                         </b-col>
                         <b-col cols="2" v-if="$auth.user.role !== 'designer'">
-                            <b-form-select v-model="item.designer" required :options="options_designer">
+                            <b-form-select v-model="item.designer" required :options="options_contentvideos">
                                 <template #first>
                                     <b-form-select-option :value="null" disabled>-- Please select a Designer --</b-form-select-option>
                                 </template>
@@ -68,7 +68,7 @@
             </b-col>
             <b-col cols="2" style="display:flex;width:300px;">
                 <label style="padding:5px;">Designer: </label>
-                <b-form-select @input="getCards" v-model="searchdesigner" required :options="options_designer">
+                <b-form-select @input="getCards" v-model="searchdesigner" required :options="options_contentvideos">
                     <template #first>
                         <b-form-select-option value="all">All</b-form-select-option>
                     </template>
@@ -182,7 +182,7 @@
                 <label>
                     Designer:
                 </label>
-                <b-form-select v-model="edititem.designer" :options="options_designer" placeholder="Select Designer" style="margin-bottom:15px;"></b-form-select>
+                <b-form-select v-model="edititem.designer" :options="options_contentvideos" placeholder="Select Designer" style="margin-bottom:15px;"></b-form-select>
                 <b-button @click="save" variant="success" block style="margin-top:10px">Save</b-button>
                 <b-button @click="deleteItem" variant="danger" block style="margin-top:10px">Delete</b-button>
             </b-col>
@@ -200,6 +200,7 @@
 <script>
 import Treeselect from '@riophae/vue-treeselect'
 import VueFab from 'vue-float-action-button'
+import imageCompression from 'browser-image-compression';
 // import the styles
 import '@riophae/vue-treeselect/dist/vue-treeselect.css'
 import TheCard from '../../../components/TheCard.vue'
@@ -214,6 +215,7 @@ export default {
     },
     data() {
         return {
+            isShowMore:false,
             icon: 'login',
             activeIcon: 'login',
             size: 'normal',
@@ -261,25 +263,13 @@ export default {
                     value: 'design_front',
                     text: 'Design Front'
                 },
-                 {
+                {
                     value: 'design_back',
                     text: 'Design Back'
-                },
-                {
-                    value: 'left_sleeve',
-                    text: 'left_sleeve'
-                },
-                 {
-                    value: 'right_sleeve',
-                    text: 'right_sleeve'
-                },
-                 {
-                    value: 'neck',
-                    text: 'neck'
                 }
             ],
             options_seller: [],
-            options_designer: [],
+            options_contentvideos: [],
             options_type: [{
                     value: 'clone',
                     text: 'Clone'
@@ -429,14 +419,22 @@ export default {
             console.log(item)
             this.items_upload = this.items_upload.filter(x => x.name != item.name);
         },
-        uploadDesign(item) {
+        async uploadVideo(item) {
             item.isUpload = false;
             item.isUploading = true;
             const fd = new FormData();
             fd.append("seller", item.seller??"");
-             fd.append("designer", item.designer??"");
+            fd.append("designer", item.designer??"");
             fd.append("file", item.file);
-            this.$axios.post('/cards/upload', fd, {
+            let metafile = await this.getVideoMetadata(item.file);
+            fd.append("width", metafile.width);
+            fd.append("height", metafile.height);
+            
+            let thumbnailbase64 = await this.getVideoThumbnail(item.file);
+            let thumbnail = await this.base64ToFile(thumbnailbase64);
+            console.log(thumbnail); 
+            fd.append("thumbnail", thumbnail);
+            this.$axios.post('/cards/uploadvideo', fd, {
                     headers: {
                         Authorization: this.$auth.getToken('local'),
                         'Content-Type': 'multipart/form-data'
@@ -451,6 +449,97 @@ export default {
                     item.isUploading = false
                 });
         },
+         async getVideoMetadata(file) {
+            return new Promise(resolve => {
+                // Tạo video DOM
+                let video = document.createElement('video');
+                video.src = URL.createObjectURL(file);
+
+                video.onloadedmetadata = () => {
+                resolve({
+                    width: video.videoWidth,
+                    height: video.videoHeight
+                });
+                }
+            });
+        },
+        async  base64ToFile(base64) {
+            return fetch(base64)
+                .then(res => res.blob())
+                .then(blob => {
+                return new File([blob], "thumbnail.png"); 
+                });
+        },
+        async getVideoThumbnail(videoFile) {
+            return new Promise(resolve => {
+
+                // Tạo video DOM element 
+                let video = document.createElement('video');
+
+                // Set video source 
+                video.src = URL.createObjectURL(videoFile);
+
+                // Nghe sự kiện 'loadedmetadata'
+                video.onloadedmetadata = () => {
+
+                // Lấy khung hình đầu tiên làm thumbnail
+                video.currentTime = 0; 
+
+                // Đợi 1 giây rồi lấy khung hình
+                setTimeout(async() => {
+                    // Tạo canvas
+                    let canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    
+                    let ctx = canvas.getContext('2d');  
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                      const options = {
+                        maxSizeMB: 1,
+                        maxWidthOrHeight: 1920,
+                        useWebWorker: true,
+                    }
+                    // Trả về dưới dạng Base64
+                    let thumbnail = canvas.toDataURL();  
+                    const blob = this.dataURLtoBlob(thumbnail); 
+                    const compressed = await imageCompression(blob, options);
+                    const compressedURL = URL.createObjectURL(compressed);
+                    resolve(compressedURL);
+                    
+                }, 1000); 
+
+                };
+
+            });
+
+        },
+         dataURLtoBlob(dataURL) {
+
+            // convert base64 to raw binary data held in a string
+            var byteString = atob(dataURL.split(',')[1]);
+
+            // separate out the mime component
+            var mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0]
+
+            // write the bytes of the string to an ArrayBuffer
+            var arrayBuffer = new ArrayBuffer(byteString.length);
+
+            // create a view into the buffer
+            var ia = new Uint8Array(arrayBuffer);
+
+            // set the bytes of the buffer to the correct values
+            for (var i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+
+            // write the ArrayBuffer to a blob, and you're done
+            var blob = new Blob([arrayBuffer], {
+                type: mimeString
+            });
+            return blob;
+
+        },
         formatNames(files) {
             return files.length === 1 ? files[0].name : `${files.length} files selected`
         },
@@ -459,7 +548,7 @@ export default {
             this.isShowSeachSeller = this.$auth.user.role == "seller" ? false : true;
             await this.getCards();
             this.getSellers();
-            this.getDesigners();
+            this.getContentVideos();
         },
         async onClickPagPage() {
             await this.getCards();
@@ -467,7 +556,7 @@ export default {
         async getCards() {
             await this.$axios.get('/cards?page=' + this.currentPage + '&searchtype=' +
                     this.searchtype + '&searchvalue=' + this.searchvalue + '&searchseller=' +
-                    this.searchseller + '&searchdesigner=' + this.searchdesigner +"&type=image", {
+                    this.searchseller + '&searchdesigner=' + this.searchdesigner +"&type=video", {
                         headers: {
                             Authorization: this.$auth.getToken('local'),
                             'Content-Type': 'application/json'
@@ -517,9 +606,9 @@ export default {
                     this.isLoading = false;
                 });
         },
-        getDesigners() {
+        getContentVideos() {
             this.isLoading = true
-            this.$axios.get('/accounts/designers', {
+            this.$axios.get('/accounts/contentvideos', {
                     headers: {
                         Authorization: this.$auth.getToken('local'),
                         'Content-Type': 'application/json'
@@ -527,13 +616,13 @@ export default {
                 })
                 .then((response) => {
 
-                    this.options_designer = []
+                    this.options_contentvideos = []
                     for (let i = 0; i < response.data.length; i++) {
                         let obj = {
                             value: response.data[i].username,
                             text: response.data[i].fullname,
                         }
-                        this.options_designer.push(obj);
+                        this.options_contentvideos.push(obj);
                     }
                     this.isLoading = false;
                 })
@@ -541,7 +630,6 @@ export default {
                     this.isLoading = false;
                 });
         },
-
         async add() {
             this.dialog = !this.dialog
             this.editeditem = Object.assign(this.defaultitem);
@@ -622,10 +710,19 @@ export default {
         },
         async uploadAttachment() {
             this.isUploadingAttachment = true;
+
             const fd = new FormData();
             fd.append("type", this.attachment_type);
             fd.append("file", this.file);
-            await this.$axios.post('/cards/' + this.edititem.id + '/attachments/upload', fd, {
+
+             let metafile = await this.getVideoMetadata(this.file);
+            fd.append("width", metafile.width);
+            fd.append("height", metafile.height);
+
+            let thumbnailbase64 = await this.getVideoThumbnail(this.file);
+            let thumbnail = await this.base64ToFile(thumbnailbase64);
+            fd.append("thumbnail", thumbnail);
+            await this.$axios.post('/cards/' + this.edititem.id + '/attachments/uploadvideo', fd, {
                     headers: {
                         Authorization: this.$auth.getToken('local'),
                         'Content-Type': 'multipart/form-data'

@@ -17,15 +17,24 @@
             <CDropdownItem href="/handle/templates">  Mockup</CDropdownItem>
             <CDropdownItem href="/handle/collections">  Collections</CDropdownItem>
         </CDropdown>
+         <CDropdown style="font-weight:500" togglerText="Videos" variant="nav-item">
+                <CDropdownItem href="/handle/cardsvideo">  Videos</CDropdownItem>
+        </CDropdown>
+          <CDropdown style="font-weight:500" togglerText="Product" variant="nav-item">
+            <CDropdownItem href="/handle/products">  Products</CDropdownItem>
+            <CDropdownItem href="/resources/tiktok-templates">  Tiktok Templates</CDropdownItem>
+        </CDropdown>
          <CDropdown v-show="role!='designer'" style="font-weight:500" togglerText="Orders" variant="nav-item">
             <CDropdownItem href="/handle/order-esty">Orders Esty</CDropdownItem>
             <CDropdownItem href="/handle/order-amz">Orders Amazon</CDropdownItem>
             <CDropdownItem href="/handle/order-burgerprints">Orders Burgerprints</CDropdownItem>
+            <CDropdownItem href="/handle/order-tiktok">Orders Tiktok</CDropdownItem>
         </CDropdown>
          <CDropdown v-show="role=='admin' || role=='seller'" style="font-weight:500" togglerText="Stores" variant="nav-item">
             <CDropdownItem href="/resources/account-store">Esty Stores</CDropdownItem>
              <CDropdownItem href="/resources/account-store-amz">Amazon Stores</CDropdownItem>
              <CDropdownItem href="/resources/account-store-burgerprints">BurgerPrints Stores</CDropdownItem>
+              <CDropdownItem href="/resources/account-store-tiktok">Tiktok Stores</CDropdownItem>
         </CDropdown>
         <CDropdown v-show="role=='admin' || role=='seller' || role=='designer'"  style="font-weight:500" togglerText="Reports" variant="nav-item">
             <CDropdownItem href="/reports/report-cards" v-show="role=='admin' || role=='seller' || role=='designer'" >Designs</CDropdownItem>

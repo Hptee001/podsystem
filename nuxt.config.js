@@ -38,6 +38,7 @@ export default {
         { src: "~/plugins/vue-konva.js", mode: "client" },
         { src: "~/plugins/vuedraggable.js" , mode: "client"},
         { src: "~/plugins/vue-float-action-button.js", mode: "client" },
+        { src: "~/plugins/axios.js" }
     ],
 
     // Auto import components: https://go.nuxtjs.dev/config-components
@@ -65,8 +66,8 @@ export default {
         icons: true
     },
     axios: {
-       // baseURL: process.env.NODE_ENV !== 'production' ? 'https://podapi.stoecom.com/api/': 'https://podapi.stoecom.com/api/',
-        baseURL: process.env.NODE_ENV !== 'production' ? 'https://localhost:9001/api/': 'https://podapi.stoecom.com/api/',
+       baseURL: process.env.NODE_ENV !== 'production' ? 'https://localhost:44330/api/': 'https://podapi.stoecom.com/api/',
+      //  baseURL: process.env.NODE_ENV !== 'production' ? 'https://localhost:44330/api/': 'https://podapi.stoecom.com/api/',
         debug: process.env.DEBUG || false
     },
     /*

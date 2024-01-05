@@ -20,13 +20,17 @@
             </b-row>
             <b-row>
                 <b-col>
-
+                    <b-form-select v-model="platform" label="Platform" @change="loadReport()">
+                        <b-form-select-option value="%">All</b-form-select-option>
+                        <b-form-select-option value="etsy">Etsy</b-form-select-option>
+                        <b-form-select-option value="tiktok">Tiktok</b-form-select-option>
+                        <b-form-select-option value="burgerprints">Burgerprints</b-form-select-option>
+                    </b-form-select>
                 </b-col>
                 <b-col align-self="end">
                     <b-button block variant="outline-secondary" @click="loadReport()">Load</b-button>
                 </b-col>
             </b-row>
-
         </div>
     </div>
     <div style="display: flex; padding-top:10px;">
@@ -39,8 +43,8 @@
         <b-spinner v-show="loading" variant="light"></b-spinner>
         <b-spinner v-show="loading" variant="dark"></b-spinner>
     </div>
-    
-    <TheCustomTableReportOrder v-for="(item, index) in itemsgroup" :key="item.seller" :index="index" :record="item" :fromdate="input.fromdate" :todate="input.todate"></TheCustomTableReportOrder>
+
+    <TheCustomTableReportOrder v-for="(item, index) in itemsgroup" :key="item.seller" :index="index" :record="item" :fromdate="input.fromdate" :todate="input.todate" :platform="platform"></TheCustomTableReportOrder>
 </div>
 </template>
 
@@ -76,6 +80,7 @@ export default {
                     label: 'ab',
                 }],
             }],
+            platform: 'etsy',
             isadmin: false,
             loading: false,
             csv: null,
@@ -259,9 +264,9 @@ export default {
             this.loadReport(this.input.fromdate, this.input.todate)
         },
         loadReportLastMonth() {
-           this.input.fromdate = moment().add(-1, 'months').startOf('month').format('YYYY-MM-DD')
-           this.input.todate = moment().add(-1, 'months').endOf('month').format('YYYY-MM-DD')
-           this.loadReport(this.input.fromdate, this.input.todate)
+            this.input.fromdate = moment().add(-1, 'months').startOf('month').format('YYYY-MM-DD')
+            this.input.todate = moment().add(-1, 'months').endOf('month').format('YYYY-MM-DD')
+            this.loadReport(this.input.fromdate, this.input.todate)
         },
         sortingChanged(a, b, key) {
             if (key == "estprofit") {
@@ -299,9 +304,9 @@ export default {
         },
         loadReport(fromdate, todate) {
             this.loading = true;
-            this.items=[]
+            this.items = []
             this.itemsgroup = []
-            this.$axios.get("/reports/generalorders?fromdate=" + this.input.fromdate+ "&todate=" + this.input.todate, {
+            this.$axios.get("/reports/generalorders?fromdate=" + this.input.fromdate + "&todate=" + this.input.todate + "&platform=" + this.platform, {
                     headers: {
                         // Overwrite Axios's automatically set Content-Type
                         Authorization: this.$auth.getToken('local'),
@@ -310,7 +315,7 @@ export default {
                 .then((response) => {
                     this.loading = false;
                     this.items = response.data;
-                    
+
                     for (let i = 0; i < this.options_seller.length; i++) {
                         var obj = {
                             seller: this.options_seller[i].value,
@@ -327,7 +332,7 @@ export default {
                             count_has_issues: 0,
                             count_out_of_stock: 0,
                             count_all: 0,
-                            
+
                             details: []
                         };
                         for (let j = 0; j < this.items.length; j++) {
@@ -344,7 +349,7 @@ export default {
                                 obj.count_has_issues += this.items[j].count_has_issues;
                                 obj.count_out_of_stock += this.items[j].count_out_of_stock;
                                 obj.count_all += this.items[j].count_all;
-                                this.items[j].sales_all  =0;
+                                this.items[j].sales_all = 0;
                                 obj.details.push(this.items[j]);
                             }
                         }

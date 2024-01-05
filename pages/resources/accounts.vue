@@ -79,6 +79,10 @@ export default {
                     value: 'designer',
                     lablel: 'Designer'
                 },
+                  {
+                    value: 'contentvideo',
+                    lablel: 'ContentVideo'
+                },
                 {
                     value: 'fulfillment',
                     lablel: 'Fulfillment'

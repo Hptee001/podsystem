@@ -4,6 +4,16 @@
         <b-link @click="viewMockup(item.image_src)">
             <b-img :src="item.image_src" height="100"></b-img>
         </b-link>
+        <div v-if="item.platform == 'tiktok'">
+            <b-link :id="'btnchangeImage'+item.id" style="font-size:11px;">change mockup</b-link>
+        <b-popover :target="'btnchangeImage'+item.id" title="Mockup Image" triggers="focus">
+            <b-input v-model="item.image_src" placeholder="image mockup"> </b-input>
+            <b-button variant="primary" size="sm" @click="onSaveImage(item)">
+                save
+                <b-spinner v-show="isUpdateImage" variant="primary" label="Spinning"></b-spinner>
+            </b-button>
+        </b-popover>
+        </div>
     </b-col>
     <b-col cols="4">
         <span style="font-weight: 500">{{ item.name }}</span> <br />
@@ -14,7 +24,7 @@
             </b-col>
         </b-row>
     </b-col>
-    <b-col cols="auto" v-if="item.name != 'Fast Shipping'">
+    <b-col cols="auto">
         <b-input-group prepend="DesignId">
             <b-form-input :disabled="!order.fulfillment_order_id==''" debounce="1000" v-model="item.design_id" @update="updateItem(item)"></b-form-input>
         </b-input-group>
@@ -22,7 +32,7 @@
             <the-design-view :designid="item.design_id" :itemname="item.name"></the-design-view>
         </b-row>
     </b-col>
-    <b-col v-show="enableFulfillment" v-if="item.name != 'Fast Shipping' && item.design_id > 0">
+    <b-col v-show="enableFulfillment" v-if="item.design_id > 0">
 
         <b-form-select :disabled="!order.fulfillment_order_id==''" v-model="item.style_id" @input="inputBlueprint(item.style_id)">
             <b-form-select-option :value="null">Select Style</b-form-select-option>
@@ -78,6 +88,7 @@ export default {
             isCompletedDialog: false,
             isUpdateVariant: false,
             modalViewImage: false,
+            isUpdateImage: false,
             main_image: '',
             class_status: '',
             dialogUpdateStatus: false,
@@ -103,7 +114,7 @@ export default {
                     this.user_role = this.$auth.user.role;
                     if (this.item.style_id !== '' && this.item.style_id !== undefined) {
                         this.inputBlueprint(this.item.style_id);
-                        
+
                         if (this.item.provider_id !== '') {
                             this.inputProvider(this.item.style_id, this.item.provider_id)
                         }
@@ -130,18 +141,23 @@ export default {
     },
     mounted() {
         if (this.enableFulfillment) {
-                if (this.order.fulfillment_id !== 'other') {
-                    this.user_role = this.$auth.user.role;
-                    if (this.item.style_id !== '' && this.item.style_id !== undefined) {
-                        this.inputBlueprint(this.item.style_id);
-                        if (this.item.provider_id !== '') {
-                            this.inputProvider(this.item.style_id, this.item.provider_id)
-                        }
+            if (this.order.fulfillment_id !== 'other') {
+                this.user_role = this.$auth.user.role;
+                if (this.item.style_id !== '' && this.item.style_id !== undefined) {
+                    this.inputBlueprint(this.item.style_id);
+                    if (this.item.provider_id !== '') {
+                        this.inputProvider(this.item.style_id, this.item.provider_id)
                     }
                 }
             }
+        }
     },
     methods: {
+        onSaveImage(item){
+            this.isUpdateImage = true;
+            this.updateItem(item);
+            this.isUpdateImage  = false;
+        },
         getOptionVariantName(option) {
             let variantName = ''
             variantName = Object.keys(option.options).map(key => `${option.options[key]}`).join('/')
@@ -238,15 +254,15 @@ export default {
                         if (this.order.fulfillment_id.includes('printify')) {
                             data = response.data.variants.sort((a, b) => ((a.options.color ? a.options.color : '') + (a.options.des ? a.options.des : '') + a.id).localeCompare(((b.options.color ? b.options.color : '') + (b.options.des ? b.options.des : '') + b.id)));
                         } else {
-                            if(this.order.fulfillment_id == 'dreamship'){
+                            if (this.order.fulfillment_id == 'dreamship') {
                                 data = response.data.sort((a, b) => ((a.options.color ? a.options.color : '') + (a.options.des ? a.options.des : '') + a.id).localeCompare(((b.options.color ? b.options.color : '') + (b.options.des ? b.options.des : '') + b.id)));
-                            }else{
-                                if(this.order.fulfillment_id == 'burgerprints'){
+                            } else {
+                                if (this.order.fulfillment_id == 'burgerprints') {
                                     data = response.data.sort((a, b) => ((a.options.color ? a.options.color : '') + (a.options.des ? a.options.des : '')).localeCompare(((b.options.color ? b.options.color : '') + (b.options.des ? b.options.des : ''))));
-                                }else
-                                data = response.data;
+                                } else
+                                    data = response.data;
                             }
-                            
+
                         }
                     })
                     .catch((error) => {

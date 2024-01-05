@@ -16,6 +16,22 @@
                     <b-img class="img-border" :src="design_back" height="117"></b-img>
                 </b-link>
             </b-col>
+             <b-col cols="auto" v-show="left_sleeve!=''">
+                <b-link @click="viewImage(left_sleeve)">
+                    <b-img class="img-border" :src="left_sleeve" height="117"></b-img>
+                </b-link>
+            </b-col>
+             <b-col cols="auto" v-show="right_sleeve!=''">
+                <b-link @click="viewImage(right_sleeve)">
+                    <b-img class="img-border" :src="right_sleeve" height="117"></b-img>
+                </b-link>
+            </b-col>
+             <b-col cols="auto" v-show="neck!=''">
+                <b-link @click="viewImage(neck)">
+                    <b-img class="img-border" :src="neck" height="117"></b-img>
+                </b-link>
+            </b-col>
+            
         </b-row>
     </div>
     <b-modal hide-header v-model="isViewImage" ok-only>
@@ -34,6 +50,9 @@ export default {
             isLoading: false,
             design_front: '',
             design_back: '',
+            left_sleeve: '',
+            right_sleeve: '',
+            neck: '',
             main_image: '',
             isViewImage: false,
             card: {
@@ -113,8 +132,11 @@ export default {
         },
         async getCardAttachment() {
             this.isLoading = true;
-            this.design_front = ''
-            this.design_back = ''
+            this.design_front = '';
+            this.design_back = '';
+             this.left_sleeve = '';
+            this.right_sleeve = '';
+            this.neck = '';
             await this.$axios.get('/cards/' + this.designid + '/attachments', {
                     headers: {
                         // Overwrite Axios's automatically set Content-Type
@@ -126,9 +148,15 @@ export default {
                     this.isLoading = false;
                     for (let i = 0; i < response.data.length; i++) {
                         if (response.data[i].type == 'design_front')
-                            this.design_front = response.data[i].thumbnail
+                            this.design_front = response.data[i].thumbnail;
                         if (response.data[i].type == 'design_back')
-                            this.design_back = response.data[i].thumbnail
+                            this.design_back = response.data[i].thumbnail;
+                        if (response.data[i].type == 'left_sleeve')
+                            this.left_sleeve = response.data[i].thumbnail;
+                        if (response.data[i].type == 'right_sleeve')
+                            this.right_sleeve = response.data[i].thumbnail;
+                        if (response.data[i].type == 'neck')
+                            this.neck = response.data[i].thumbnail;
                     }
 
                 })

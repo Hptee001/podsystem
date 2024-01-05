@@ -5,6 +5,26 @@
         Error: {{ messageError }}
     </b-alert>
     <b-container style="background:white; padding-top:10px; margin-bottom:2px; min-width:1330px">
+        <b-row v-if="platform == 'tiktok'" class="justify-content-md-end" style="width:100%; margin-bottom:10px;">
+            <b-col >
+                <b-input-group>
+                    <b-form-file v-model="inputfile" :state="Boolean(inputfile)" placeholder="Choose a file or drop it here..." drop-placeholder="Drop file here..."></b-form-file>
+                </b-input-group>
+
+            </b-col>
+            <b-col >
+                <b-input-group>
+                    <b-form-select style="width:150px;" v-model="storeimport">
+                        <b-form-select-option :value="null" disabled>Select Store Import</b-form-select-option>
+                        <b-form-select-option v-for="store in options_stores" :key="store.store" :value="store.store">{{store.store}}</b-form-select-option>
+                    </b-form-select>
+                    <b-button variant="success" @click="UploadFile()">Upload File</b-button>
+                    <b-button variant="primary" @click="ExportTrackings()">Export Trackings 
+                         <b-spinner v-if="isDownloading" style=" width: 15px; height: 15px;"></b-spinner>
+                    </b-button>
+                </b-input-group>
+            </b-col>
+        </b-row>
         <b-row class="justify-content-md-center" style="width:100%">
 
             <b-col class="text-right" cols="auto">
@@ -129,8 +149,11 @@ export default {
     props: ["platform"],
     data() {
         return {
+            isDownloading:false,
             searchFulfillmentValue: 'all',
             fromCost: 0,
+            inputfile: null,
+            storeimport: null,
             isCheckNoCost: false,
             toCost: 10000,
             searchStore: 'ALL',
@@ -306,6 +329,24 @@ export default {
         this.initialize();
     },
     methods: {
+        async UploadFile() {
+            this.isLoadingUploadFileImport = true;
+            const fdata = new FormData();
+            fdata.append("store", this.storeimport);
+            fdata.append("file", this.inputfile);
+            await this.$axios
+                .post("/ordersesty/importtiktok", fdata, {
+                    headers: {
+                        Authorization: this.$auth.getToken("local"),
+                        'Content-Type': 'multipart/form-data'
+                    },
+                })
+                .then((response) => {})
+                .catch(function (error) {});
+
+            this.isLoadingUploadFileImport = false;
+            this.initialize();
+        },
         getOrderByDate(nbrdate) {
             let fromdate = moment().add(-500, 'days').format('YYYY-MM-DD')
             let todate = moment().add(1, 'days').format('YYYY-MM-DD')
@@ -429,6 +470,39 @@ export default {
                 .then((response) => {})
                 .catch((error) => {});
         },
+        async ExportTrackings(){
+            try {
+                this.isDownloading = true;
+                const response = await this.$axios.get('/ordersesty/exporttiktoktracking?store='+this.storeimport, {
+                    headers: {
+                        Authorization: this.$auth.getToken('local'),
+                        'Content-Type': 'application/json'
+                    },
+                    responseType: 'blob' // Set the responseType to 'blob' to get binary data
+                });
+
+                // Create a Blob from the binary data
+                const blob = new Blob([response.data], {
+                    type: response.headers['content-type']
+                });
+
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = "export_trackins_" + this.storeimport + ".xlsx"; // Set the filename here
+                link.click();
+                // Create a temporary URL for the Blob
+                //const tempUrl = window.URL.createObjectURL(blob);
+
+                // Open the file in a new window for downloading
+                // window.open(tempUrl);
+
+                // // Release the temporary URL
+                // window.URL.revokeObjectURL(tempUrl);
+            } catch (error) {
+                console.error('Error downloading file:', error);
+            }
+            this.isDownloading = false;
+        },
         async updateFulfillment(order, fulfillment_order_id, status) {
             await this.updateOrderCost(order);
             let index = this.items.findIndex(x => x.id == order.id);
@@ -497,7 +571,7 @@ export default {
         },
         async getStores() {
             this.isLoading = true;
-            await this.$axios.get('/accounts/stores', {
+            await this.$axios.get('/accounts/stores?platform='+this.platform, {
                     headers: {
                         Authorization: this.$auth.getToken('local'),
                         'Content-Type': 'application/json'
@@ -505,14 +579,11 @@ export default {
                 })
                 .then(async (response) => {
                     this.stores = response.data;
-                    console.log(this.options_seller)
-                    if (this.$auth.user.role == 'fulfillment') {
+                    if (this.$auth.user.role == 'fulfillment' || this.$auth.user.role == 'seller') {
                         console.log(this.options_seller)
                         this.stores = this.stores.filter(x => this.options_seller.findIndex(s => s.username == x.username) >= 0);
                     }
-                    console.log(this.stores)
                     this.options_stores = this.stores;
-
                     this.isLoading = false;
                 })
                 .catch((error) => {
@@ -538,7 +609,7 @@ export default {
                             limit: 100
                         });
                         this.options_seller = this.options_seller.filter(x => result.findIndex(s => s.seller == x.username) >= 0)
-                     
+
                     }
                     this.isLoading = false;
                 })

@@ -235,12 +235,22 @@ export default {
                         for (let i = 0; i < this.chartOptions.xaxis.categories.length; i++) {
                             let label = this.chartOptions.xaxis.categories[i];
                             let index = -1;
+                            let valueData = 0;
                             for (let z = 0; z < response.data.length; z++) {
+                                if ((response.data[z].order_date.split('-')[2] + '/' + response.data[z].order_date.split('-')[1]) == label) {
+                                    valueData += response.data[z].sales;
+                                }
                                 if ((response.data[z].order_date.split('-')[2] + '/' + response.data[z].order_date.split('-')[1]) == label && response.data[z].seller == obj.name) {
                                     index = z;
                                     break;
                                 }
                             }
+                              if (this.chartOptions.yaxis.max < valueData) {
+                                let tmp = valueData+100;
+                                this.chartOptions.yaxis.max = tmp;
+                                this.chartOptions.yaxis.max = tmp;
+                            }
+
                             if (index >= 0) {
                                 obj.data.push(response.data[index].sales);
                             } else {

@@ -46,7 +46,7 @@ export default {
     components: {
         TheCustomReportStoreProducts
     },
-    props: ["record", "index", "fromdate", "todate"],
+    props: ["record", "index", "fromdate", "todate", "platform"],
     data() {
         return {
             items: [],
@@ -72,7 +72,7 @@ export default {
             return parseFloat(price).toFixed(2);
         },
         async getSales() {
-            await this.$axios.get("/reports/generalorders/sales?seller=" + this.record.seller + "&fromdate=" + this.fromdate + "&todate=" + this.todate, {
+            await this.$axios.get("/reports/generalorders/sales?seller=" + this.record.seller + "&fromdate=" + this.fromdate + "&todate=" + this.todate + "&platform="+this.platform, {
                     headers: {
                         // Overwrite Axios's automatically set Content-Type
                         Authorization: this.$auth.getToken('local'),

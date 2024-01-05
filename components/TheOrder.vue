@@ -54,7 +54,7 @@
                 <br />-->
                     <p v-show="order.customer_note!=''" class="p-customer-note">{{order.customer_note}}</p>
                     <b-link style="display:block" v-show="user_role!='seller'" @click="enableFulfillment = !enableFulfillment">Fulfilment: <span v-show="order.fulfillment_order_id">{{order.fulfillment_id}} :</span> {{order.fulfillment_order_id}}</b-link>
-                    <div style="display:block"><label>Total: {{order.order_total}} Fee: {{showFee}} - after Fee: {{showAfterFee}}</label></div>
+                    <div style="display:block"><label>Total: {{showTotal}} Fee: {{showFee}} - after Fee: {{showAfterFee}}</label></div>
                     <div style="display:block" v-show="order.fulfillment_order_id!=''">
                         <label>Items Cost: {{order.fulfillment_items_cost}} - Shipping Cost: {{order.fulfillment_ship_cost}} </label>
                     </div>
@@ -194,7 +194,7 @@
                                 <b-form-group label="Fulfillment Ship Cost">
                                     <b-input v-model="order.fulfillment_ship_cost" type="number"></b-input>
                                 </b-form-group>
-                                <b-form-group v-show="$auth.user.role !== 'fulfillment'" label="Tracking Url">
+                                <b-form-group label="Tracking Url">
                                     <b-input v-model="order.tracking_url" placeholder="Format: Carrier|Number|Link"></b-input>
                                 </b-form-group>
 
@@ -313,6 +313,14 @@ export default {
                     id: 'otbzone',
                     title: 'otbzone'
                 },
+                 {
+                    id: 'merchize',
+                    title: 'merchize'
+                },
+                {
+                    id: 'printway',
+                    title: 'printway'
+                },
                 {
                     id: 'other',
                     title: 'other'
@@ -382,7 +390,7 @@ export default {
             edit_item_id: 0,
             options_blueprints: [],
             printify: {
-                const_blueprints: [1296,1256,632, 1268, 478, 750, 1307, 598, 6, 11, 12, 706, 1015, 77, 49, 80, 48, 41, 39, 880, 988, 420, 157, 32, 580, 34, 31, 561, 586, 599, 617, 33, 964, 610, 1039, 600, 146, 1141, 1094, 81, 800, 571, 945, 603, 400, 562, 627, 314, 638],
+                const_blueprints: [145, 184, 1296,1256,632, 1268, 478, 750, 1307, 598, 6, 11, 12, 706, 1015, 77, 49, 80, 48, 41, 39, 880, 988, 420, 157, 32, 580, 34, 31, 561, 586, 599, 617, 33, 964, 610, 1039, 600, 146, 1141, 1094, 81, 800, 571, 945, 603, 400, 562, 627, 314, 638],
                 options_blueprints: [],
                 options_providers: [],
                 options_variants: [],
@@ -399,12 +407,26 @@ export default {
             return this.fulfillment_order_id;
         },
         showFee() {
-            let fee = 0.065 * (this.order.item_total + this.order.discount_value) + 0.03 * (this.order.item_total + this.order.discount_value + this.order.shipping_value) + 0.25;
-            return fee.toFixed(2);
+            if(this.order.platform=='burgerprints'){
+                let fee = 0.05 * (this.order.order_total);
+                return fee.toFixed(2);
+            }else
+            {
+                let fee = 0.065 * (this.order.item_total + this.order.discount_value) + 0.03 * (this.order.item_total + this.order.discount_value + this.order.shipping_value) + 0.25;
+                return fee.toFixed(2);
+            }
+        },
+        showTotal() {
+            return this.order.order_total.toFixed(2);
         },
         showAfterFee() {
-            let afterfee = this.order.order_total - 0.065 * (this.order.item_total + this.order.discount_value) + 0.03 * (this.order.item_total + this.order.discount_value + this.order.shipping_value) + 0.25;
-            return afterfee.toFixed(2);
+            if(this.order.platform=='burgerprints'){
+               let afterfee = this.order.order_total - 0.05 *this.order.order_total;
+                return afterfee.toFixed(2);
+            }else{
+                let afterfee = this.order.order_total - 0.065 * (this.order.item_total + this.order.discount_value) + 0.03 * (this.order.item_total + this.order.discount_value + this.order.shipping_value) + 0.25;
+                return afterfee.toFixed(2);
+            }
         },
         showTime() {
             return (
@@ -531,11 +553,12 @@ export default {
                                         this.options_blueprints = response.data.filter(x => x.title.includes('Kid') || x.title.includes('Tee') || x.title.includes('Unisex') 
                                         || x.title.includes('Men')|| x.title.includes('Women') || x.title.includes('Sweat')|| x.title.includes('Shirt'));
                                     } else {
+                                         if (this.order.fulfillment_id == "printway") {
+                                            this.options_blueprints = response.data.filter(x => x.title.includes('Mug') || x.title.includes('Tumbler') || x.title.includes('Bottle'));
+                                        }else
                                         this.options_blueprints = response.data;
                                     }
-
                                 }
-
                             }
 
                         }
